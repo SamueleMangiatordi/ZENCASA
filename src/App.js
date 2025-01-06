@@ -13,7 +13,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 
 function App() {
-  const [cartItems, setCartItems] = useState([]); 
+  const [cartItems, setCartItems] = useState([]);
 
   const addToCart = (product) => {
     setCartItems((prevCartItems) => {
@@ -30,15 +30,17 @@ function App() {
 
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/products" element={<ProductsCatalog onAddToCart={addToCart} />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/cart" element={<Cart cartItems={cartItems || []} />} />
-        <Route path="/checkout" element={<Checkout cartItems={cartItems || []} />} />
-      </Routes>
+      <div>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/admin/*" element={<AdminPage />} />
+          <Route path="/products" element={<ProductsCatalog onAddToCart={addToCart} />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/cart" element={<Cart cartItems={cartItems || []} />} />
+          <Route path="/checkout" element={<Checkout cartItems={cartItems || []} />} />
+        </Routes>
+      </div>
     </Router>
   );
 }

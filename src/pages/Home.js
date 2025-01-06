@@ -192,7 +192,7 @@ const Home = () => {
       <HeroSection>
         <HeroImageContainer>
           <img 
-            src="/HeroImage.png" 
+            src="/assets/immagini/HeroImage.png" 
             alt="Hero Product" 
             style={{ width: "100%", height: "auto" }} 
           />
@@ -245,14 +245,14 @@ const Home = () => {
       <p>Estrarre l’Organizer dalla confezione in plastica e aprire la cerniera dalla parte superiore.</p>
     </StepContent>
     <CircularImage2>
-      <img src="/passo1.jpeg" alt="Step 1" />
+      <img src="/assets/immagini/passo1.jpeg" alt="Step 1" />
     </CircularImage2>
   </AssemblyStep>
 
 
 <AssemblyStep>
     <CircularImageContainer>
-      <img src="/passo2.jpeg" alt="Step 2" />
+      <img src="/assets/immagini/passo2.jpeg" alt="Step 2" />
     </CircularImageContainer>
     <StepContent2>
       <h3>Step 2: Apri la Scatola</h3>
@@ -269,14 +269,14 @@ const Home = () => {
     </p>
   </StepContent>
   <CircularImage2>
-    <img src="/passo3.jpeg" alt="Step 3" />
+    <img src="/assets/immagini/passo3.jpeg" alt="Step 3" />
   </CircularImage2>
   
 </AssemblyStep>
 
 <AssemblyStep>
   <CircularImageContainer>
-    <img src="/passo4.jpeg" alt="Step 4" />
+    <img src="/assets/immagini/passo4.jpeg" alt="Step 4" />
   </CircularImageContainer>
   <StepContent>
     <h3>Step 4: Fatto!</h3>
@@ -299,7 +299,7 @@ const Home = () => {
     </div>
   </BrandStoryText>
   <BrandStoryImageContainer>
-    <img src="/BrandStory.png" alt="Brand Story" />
+    <img src="/assets/immagini/BrandStory.png" alt="Brand Story" />
   </BrandStoryImageContainer>
   
 </BrandStoryContainer>
@@ -322,7 +322,7 @@ const Home = () => {
           ))}
           <MoreButton>Altre Domande?</MoreButton>
         </FAQContent>
-        <FAQImage src="/FAQImage.png" alt="FAQ" />
+        <FAQImage src="/assets/immagini/FAQImage.png" alt="FAQ" />
       </FAQContainer>
 
     </div>
