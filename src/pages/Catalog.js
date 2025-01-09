@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CatalogContainer,
   Sidebar,
@@ -23,38 +23,45 @@ import {
   StyledButton,
   Icon,
 } from '../styles/StyledComponents';
+import {PRODUCTS_URL} from '../data/api'; // Importa la funzione getProducts
 
 const ProductsCatalog = () => {
+  const [products, setProducts] = useState([]); // Stato per i prodotti recuperati
+  const [loading, setLoading] = useState(true); // Stato di caricamento
+  const [error, setError] = useState(null); // Stato per eventuali errori
   const [selectedPriceRange, setSelectedPriceRange] = useState(null);
   const [selectedColors, setSelectedColors] = useState([]);
   const [sortOption, setSortOption] = useState('I nostri preferiti');
 
-  const products = [
-    {
-      id: 1,
-      name: 'Set 2 scatole per vestiti',
-      image: '/assets/immagini/scatoleBeige.jpg',
-      price: 30.98,
-      color: 'Beige',
-      tag: 'Novità',
-    },
-    {
-      id: 2,
-      name: 'Set 3 scatole per vestiti',
-      image: '/assets/immagini/scatoleGrigie.jpg',
-      price: 38.90,
-      color: 'Grigio',
-      tag: 'Novità',
-    },
-    {
-      id: 3,
-      name: 'Set 4 contenitori sottoletto',
-      image: '/assets/immagini/contenitoriSottoletto.jpg',
-      price: 49,
-      color: 'Bianco',
-      tag: 'Novità',
-    },
-  ];
+  // Recupera i prodotti da Strapi
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch(PRODUCTS_URL); // API di Strapi
+        if (!response.ok) {
+          throw new Error(`Errore HTTP: ${response.status}`);
+        }
+        const data = await response.json();
+        setProducts(data.data.map((product) => {
+          const imageFormats = product.immagine_prodotto?.[0]?.formats || {};
+          const imageUrl = imageFormats.medium?.url || imageFormats.large?.url || imageFormats.small?.url || product.immagine_prodotto?.[0]?.url;
+  
+          return {
+            id: product.id,
+            name: product.nome_prodotto,
+            image: imageUrl ? `http://localhost:1337${imageUrl}` : '/default-image.jpg',
+            price: product.prezzo_unitario,
+          };
+        }));
+        setLoading(false);
+      } catch (err) {
+        setError('Impossibile recuperare i dati');
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const priceRanges = [
     { label: 'Fino a 20 euro', maxPrice: 20 },
@@ -91,6 +98,7 @@ const ProductsCatalog = () => {
       .map(({ item }) => item);
   };
 
+  // Filtraggio dei prodotti
   let filteredProducts = products.filter((product) => {
     const matchesPrice =
       selectedPriceRange !== null ? product.price <= selectedPriceRange : true;
@@ -101,6 +109,7 @@ const ProductsCatalog = () => {
     return matchesPrice && matchesColor;
   });
 
+  // Ordinamento dei prodotti
   if (sortOption === 'Prezzo crescente') {
     filteredProducts.sort((a, b) => a.price - b.price);
   } else if (sortOption === 'Prezzo decrescente') {
@@ -109,30 +118,39 @@ const ProductsCatalog = () => {
     filteredProducts = shuffleArray(filteredProducts);
   }
 
+  // Stato di caricamento ed errori
+  if (loading) {
+    return <p>Caricamento dei prodotti...</p>;
+  }
+
+  if (error) {
+    return <p>{error}</p>;
+  }
+
   return (
     <>
       <Banner>Spedizione gratuita per ordini superiori a 50 euro</Banner>
-      <Header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1% 5%" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+      <Header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1% 5%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Title>Zencasa</Title>
-          <nav style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+          <nav style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <StyledButton to="/">HOME</StyledButton>
             <StyledButton to="/products">CATALOGO</StyledButton>
-            <StyledButton 
-              as="a" 
-              href="https://wa.me/393883816904" 
-              target="_blank" 
+            <StyledButton
+              as="a"
+              href="https://wa.me/393883816904"
+              target="_blank"
               rel="noopener noreferrer"
             >
               CONTATTI
             </StyledButton>
           </nav>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <StyledButton to="/login" style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <StyledButton to="/login" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <Icon>👤</Icon>
           </StyledButton>
-          <StyledButton to="/cart" style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+          <StyledButton to="/cart" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <Icon>🛍️</Icon>
           </StyledButton>
         </div>

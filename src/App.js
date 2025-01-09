@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -14,6 +14,9 @@ import Checkout from './pages/Checkout';
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
+  const [products, setProducts] = useState([]); // Stato per i prodotti
+  const [loading, setLoading] = useState(true); // Stato di caricamento
+  const [error, setError] = useState(null); // Stato per gli errori
 
   const addToCart = (product) => {
     setCartItems((prevCartItems) => {
@@ -35,7 +38,17 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/admin/*" element={<AdminPage />} />
-          <Route path="/products" element={<ProductsCatalog onAddToCart={addToCart} />} />
+          <Route
+            path="/products"
+            element={
+              <ProductsCatalog
+                onAddToCart={addToCart}
+                products={products}
+                loading={loading}
+                error={error}
+              />
+            }
+          />
           <Route path="/register" element={<Register />} />
           <Route path="/cart" element={<Cart cartItems={cartItems || []} />} />
           <Route path="/checkout" element={<Checkout cartItems={cartItems || []} />} />
