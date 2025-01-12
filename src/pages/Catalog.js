@@ -24,6 +24,8 @@ import {
   Icon,
 } from '../styles/StyledComponents';
 import {PRODUCTS_URL} from '../data/api'; // Importa la funzione getProducts
+import { StyledLink } from '../styles/StyledCatalog'; // Importa StyledLink
+
 
 const ProductsCatalog = () => {
   const [products, setProducts] = useState([]); // Stato per i prodotti recuperati
@@ -48,9 +50,11 @@ const ProductsCatalog = () => {
   
           return {
             id: product.id,
+            documentId: product.documentId,
             name: product.nome_prodotto,
             image: imageUrl ? `http://localhost:1337${imageUrl}` : '/default-image.jpg',
             price: product.prezzo_unitario,
+            //tag: product.attributes.tag || 'Novità',
           };
         }));
         setLoading(false);
@@ -198,11 +202,18 @@ const ProductsCatalog = () => {
           </SortContainer>
 
           <ProductGrid>
-            {filteredProducts.map((product) => (
+            {products.map((product) => (
               <ProductCard key={product.id}>
-                <ProductImage src={product.image} alt={product.name} />
-                <ProductTag>{product.tag}</ProductTag>
-                <ProductName>{product.name}</ProductName>
+                {/* Link all'immagine del prodotto */}
+                <StyledLink to={`/products/${product.documentId}`}>
+                  <ProductImage src={product.image} alt={product.name} />
+                </StyledLink>
+
+                {/* Link al nome del prodotto */}
+                <StyledLink to={`/products/${product.documentId}`}>
+                  <ProductName>{product.name}</ProductName>
+                </StyledLink>
+
                 <ProductPrice>{`€${product.price.toFixed(2)}`}</ProductPrice>
                 <AddToCartButton>Aggiungi al carrello</AddToCartButton>
               </ProductCard>

@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 import Register from './pages/Register';
 import ProductsCatalog from './pages/Catalog';
+import ProductDetails from './pages/ProductDetails'; // Import del componente pagina di dettaglio
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 
@@ -49,6 +50,7 @@ function App() {
               />
             }
           />
+          <Route path="/products/:documentId" element={<ProductDetails />} />
           <Route path="/register" element={<Register />} />
           <Route path="/cart" element={<Cart cartItems={cartItems || []} />} />
           <Route path="/checkout" element={<Checkout cartItems={cartItems || []} />} />

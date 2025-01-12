@@ -1,5 +1,14 @@
 import styled from 'styled-components';
+import { Link } from 'react-router-dom'; // Importa Link di react-router-dom
 
+export const StyledLink = styled(Link)`
+  text-decoration: none; /* Rimuove la sottolineatura */
+  color: black; /* Colore del link in nero */
+
+  &:hover {
+    color: grey; /* Colore al passaggio del mouse */
+  }
+`;
 export const CatalogContainer = styled.div`
   display: flex;
   max-width: 1200px;
