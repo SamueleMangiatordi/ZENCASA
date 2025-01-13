@@ -39,7 +39,7 @@ const ProductsCatalog = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(PRODUCTS_URL); // API di Strapi
+        const response = await fetch(`${PRODUCTS_URL}?populate=*`); // API di Strapi
         if (!response.ok) {
           throw new Error(`Errore HTTP: ${response.status}`);
         }

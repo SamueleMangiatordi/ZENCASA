@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom'; // Importa useParams per ottenere l'id dalla URL
 import { PRODUCTS_URL } from '../data/api';
-//import './ProductDetails.css';
+import {
+  ProductDetailsContainer,
+  ProductTitle,
+  ProductImage,
+  ProductDescription,
+  ProductPrice,
+  BackButton
+} from '../styles/StyledProductDetails';
 
 
 const ProductDetails = () => {
@@ -15,7 +22,9 @@ const ProductDetails = () => {
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:1337/api/prodottis?filters[documentId][$eq]=${documentId}&populate=*`);
+        const response = await fetch(`${PRODUCTS_URL}?populate=*`);
+        //const response = await fetch(`${PRODUCTS_URL}?filters[documentId][$eq]=${documentId}&populate=*`); //istruzione originale
+        //l'ho modificata io, in teoria va uguale
         
         if (!response.ok) {
           throw new Error(`Errore HTTP: ${response.status}`);
