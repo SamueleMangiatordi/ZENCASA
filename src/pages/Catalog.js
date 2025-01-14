@@ -10,11 +10,11 @@ import {
   ProductGrid,
   ProductCard,
   ProductImage,
+  ProductTag,
   ProductName,
   ProductPrice,
-  ProductTag,
-  AddToCartButton,
-  ColorCircle,
+  //AddToCartButton,
+  //ColorCircle,
 } from '../styles/StyledCatalog';
 import {
   Banner,
@@ -24,7 +24,7 @@ import {
   Icon,
 } from '../styles/StyledComponents';
 import {PRODUCTS_URL} from '../data/api'; // Importa la funzione getProducts
-import { StyledLink } from '../styles/StyledCatalog'; // Importa StyledLink
+import ProductDetails from './ProductDetails'; // Import del componente dei dettagli
 
 
 const ProductsCatalog = () => {
@@ -32,8 +32,9 @@ const ProductsCatalog = () => {
   const [loading, setLoading] = useState(true); // Stato di caricamento
   const [error, setError] = useState(null); // Stato per eventuali errori
   const [selectedPriceRange, setSelectedPriceRange] = useState(null);
-  const [selectedColors, setSelectedColors] = useState([]);
+  //const [selectedColors, setSelectedColors] = useState([]);
   const [sortOption, setSortOption] = useState('I nostri preferiti');
+  const [selectedProduct, setSelectedProduct] = useState(null); // Stato per il prodotto selezionato
 
   // Recupera i prodotti da Strapi
   useEffect(() => {
@@ -44,19 +45,17 @@ const ProductsCatalog = () => {
           throw new Error(`Errore HTTP: ${response.status}`);
         }
         const data = await response.json();
-        setProducts(data.data.map((product) => {
-          const imageFormats = product.immagine_prodotto?.[0]?.formats || {};
-          const imageUrl = imageFormats.medium?.url || imageFormats.large?.url || imageFormats.small?.url || product.immagine_prodotto?.[0]?.url;
-  
-          return {
-            id: product.id,
-            documentId: product.documentId,
-            name: product.nome_prodotto,
-            image: imageUrl ? `http://localhost:1337${imageUrl}` : '/default-image.jpg',
-            price: product.prezzo_unitario,
-            //tag: product.attributes.tag || 'Novità',
-          };
-        }));
+
+        console.log('Prodotti ricevuti:', data.data); // Log per verificare i dati
+
+        setProducts(data.data.map((product) => ({   
+          id: product.id,
+          documentId: product.documentId,
+          name: product.nome_prodotto,
+          image: product.immagine_prodotto?.[0]?.formats?.medium?.url ||  product.immagine_prodotto?.[0]?.formats?.small?.url,
+          description: product.descrizione,
+          price: product.prezzo_unitario,
+        })));
         setLoading(false);
       } catch (err) {
         setError('Impossibile recuperare i dati');
@@ -69,27 +68,27 @@ const ProductsCatalog = () => {
 
   const priceRanges = [
     { label: 'Fino a 20 euro', maxPrice: 20 },
-    { label: 'Fino a 50 euro', maxPrice: 50 },
-    { label: 'Fino a 100 euro', maxPrice: 100 },
+    //{ label: 'Fino a 50 euro', maxPrice: 50 },
+    //{ label: 'Fino a 100 euro', maxPrice: 100 },
   ];
 
-  const colors = [
+  /*const colors = [
     { name: 'Beige', color: '#f5deb3' },
     { name: 'Grigio', color: '#808080' },
     { name: 'Bianco', color: '#ffffff' },
-  ];
+  ];*/
 
   const handlePriceRangeChange = (maxPrice) => {
     setSelectedPriceRange(maxPrice === selectedPriceRange ? null : maxPrice);
   };
 
-  const handleColorChange = (color) => {
+  /*const handleColorChange = (color) => {
     setSelectedColors((prevSelected) =>
       prevSelected.includes(color)
         ? prevSelected.filter((c) => c !== color)
         : [...prevSelected, color]
     );
-  };
+  };*/
 
   const handleSortChange = (option) => {
     setSortOption(option);
@@ -104,13 +103,16 @@ const ProductsCatalog = () => {
 
   // Filtraggio dei prodotti
   let filteredProducts = products.filter((product) => {
+    console.log('Confronto prezzo:', product.price, selectedPriceRange);
+
     const matchesPrice =
       selectedPriceRange !== null ? product.price <= selectedPriceRange : true;
-    const matchesColor = selectedColors.length
+    /*const matchesColor = selectedColors.length
       ? selectedColors.includes(product.color)
-      : true;
+      : true;*/
 
-    return matchesPrice && matchesColor;
+    return matchesPrice;
+    //return matchesPrice && matchesColor;
   });
 
   // Ordinamento dei prodotti
@@ -130,6 +132,9 @@ const ProductsCatalog = () => {
   if (error) {
     return <p>{error}</p>;
   }
+
+  const handleProductClick = (product) => setSelectedProduct(product); // Seleziona prodotto
+  const handleBackToCatalog = () => setSelectedProduct(null); // Torna al catalogo
 
   return (
     <>
@@ -174,7 +179,7 @@ const ProductsCatalog = () => {
             </FilterOption>
           ))}
 
-          <FilterTitle>Colore</FilterTitle>
+          {/*<FilterTitle>Colore</FilterTitle>
           {colors.map((color, index) => (
             <FilterOption key={index}>
               <ColorCircle color={color.color} />
@@ -185,8 +190,15 @@ const ProductsCatalog = () => {
               />
               {color.name}
             </FilterOption>
-          ))}
+          ))*/}
         </Sidebar>
+
+        {selectedProduct ? (
+          <MainContent>
+            <button onClick={handleBackToCatalog} style={{ marginBottom: '20px' }}>← Torna al catalogo</button>
+            <ProductDetails selectedProduct={selectedProduct} />
+          </MainContent>
+        ) : (
         <MainContent>
           <SortContainer>
             <span>Ordina:</span>
@@ -203,23 +215,16 @@ const ProductsCatalog = () => {
 
           <ProductGrid>
             {products.map((product) => (
-              <ProductCard key={product.id}>
-                {/* Link all'immagine del prodotto */}
-                <StyledLink to={`/products/${product.documentId}`}>
-                  <ProductImage src={product.image} alt={product.name} />
-                </StyledLink>
-
-                {/* Link al nome del prodotto */}
-                <StyledLink to={`/products/${product.documentId}`}>
-                  <ProductName>{product.name}</ProductName>
-                </StyledLink>
-
+              <ProductCard key={product.id} onClick={() => handleProductClick(product)}>
+                <ProductImage src={`http://localhost:1337${product.image}`} alt={product.name} />
+                <ProductName>{product.name}</ProductName>
                 <ProductPrice>{`€${product.price.toFixed(2)}`}</ProductPrice>
-                <AddToCartButton>Aggiungi al carrello</AddToCartButton>
+                {/*<AddToCartButton>Aggiungi al carrello</AddToCartButton>*/}
               </ProductCard>
             ))}
           </ProductGrid>
         </MainContent>
+        )}
       </CatalogContainer>
     </>
   );
