@@ -8,10 +8,16 @@ import Home from './pages/Home';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 import Register from './pages/Register';
+import CompletaProfilo from './pages/CompletaProfilo';
 import ProductsCatalog from './pages/Catalog';
 import ProductDetails from './pages/ProductDetails'; // Import del componente pagina di dettaglio
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
+import Catalog from './pages/Catalog';
+import User from './pages/User';
+
+import {AuthProvider} from "./data/authContext";
+
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
@@ -33,6 +39,7 @@ function App() {
   };
 
   return (
+    <AuthProvider>
     <Router>
       <div>
         <Routes>
@@ -52,11 +59,14 @@ function App() {
           />
           <Route path="/products/:documentId" element={<ProductDetails />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/completa-profilo" element={<CompletaProfilo />} />
           <Route path="/cart" element={<Cart cartItems={cartItems || []} />} />
           <Route path="/checkout" element={<Checkout cartItems={cartItems || []} />} />
+          <Route path="/user" element={<User/>} />
         </Routes>
       </div>
     </Router>
+    </AuthProvider>
   );
 }
 
