@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../data/authContext';
 import {API_URL} from '../data/api';
-import { UserContainer, UserTitle, UserInfo, UserLabel, ErrorMessage, LoadingMessage } from '../styles/StyledUser';
+import { UserContainer, UserTitle, UserInfo, UserLabel, ErrorMessage, LoadingMessage, LogoutButton } from '../styles/StyledUser';
 
 
 const User = () => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, logout } = useAuth();
+    const navigate = useNavigate();
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -61,13 +62,26 @@ const User = () => {
   
       fetchUserData();
     }, []);
+
+    const handleLogout = () => {
+      logout();
+      navigate('/'); // Reindirizza alla home
+    };
   
     if (loading) {
-      return <div>Caricamento in corso...</div>;
+      return (
+        <UserContainer>
+          <LoadingMessage>Caricamento in corso...</LoadingMessage>
+        </UserContainer>
+      );
     }
   
     if (error) {
-      return <div>Errore: {error}</div>;
+      return (
+        <UserContainer>
+          <ErrorMessage>Errore: {error}</ErrorMessage>
+        </UserContainer>
+      );
     }
   
     return (
@@ -88,6 +102,7 @@ const User = () => {
           <UserInfo>
             <UserLabel>Città:</UserLabel> {userData?.citta || 'Non specificata'} - <UserLabel>CAP:</UserLabel> {userData?.cap || ''}
           </UserInfo>
+          <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
         </UserContainer>
       );
     };

@@ -39,3 +39,23 @@ export const LoadingMessage = styled.div`
   font-size: 1.2rem;
   margin-top: 20px;
 `;
+
+export const LogoutButton = styled.button`
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  color: #fff;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+
+  &:active {
+    background-color: #003f7f;
+  }
+`;
