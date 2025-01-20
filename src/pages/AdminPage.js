@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
-  CLIENTS_URL,
+
   PRODUCTS_URL,
+  USERS_URL,
 } from '../data/api';
 
 import {
@@ -49,6 +50,7 @@ const AdminPage = () => {
     
     return savedSuppliers ? JSON.parse(savedSuppliers) : [];
   });
+  
   const [showForm, setShowForm] = useState(false); // Per mostrare/nascondere il form
   const [newSupplier, setNewSupplier] = useState({
     name: '',
@@ -57,7 +59,7 @@ const AdminPage = () => {
   });
 
   const [showDeleteForm, setShowDeleteForm] = useState(false); // Mostra/Nascondi il form di eliminazione
-const [supplierToDelete, setSupplierToDelete] = useState(''); // Nome del fornitore da eliminare
+  const [supplierToDelete, setSupplierToDelete] = useState(''); // Nome del fornitore da eliminare
 
 
   // Funzione per aggiungere un nuovo fornitore
@@ -125,12 +127,17 @@ const [supplierToDelete, setSupplierToDelete] = useState(''); // Nome del fornit
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [productsError, setProductsError] = useState(null);
+  const [editingQuantity, setEditingQuantity] = useState('');
+
 
  
   // Stati per la modifica di un prodotto
   const [editingProductId, setEditingProductId] = useState(null);
   const [editingName, setEditingName] = useState('');
   const [editingPrice, setEditingPrice] = useState('');
+  const [editingDescription, setEditingDescription] = useState('');
+  const [customers, setCustomers] = useState({});
+
 
   // ----------------------------
   // USEEFFECT
@@ -141,25 +148,62 @@ const [supplierToDelete, setSupplierToDelete] = useState(''); // Nome del fornit
       try {
         const response = await axios.get('http://localhost:1337/api/ordinis?populate=*');
         const allOrders = response.data.data || [];
-        setOrders(allOrders);
+    
+        // Recupera i dettagli dei clienti usando `documentId`
+        const customerPromises = allOrders.map(async (order) => {
+          const customerDocumentId = order.user?.documentId;
+          if (customerDocumentId) {
+            try {
+              const customerResponse = await axios.get(`http://localhost:1337/api/users/${customerDocumentId}`);
+              return { [customerDocumentId]: customerResponse.data };
+            } catch (err) {
+              console.error(`Errore nel recupero dei dettagli del cliente con documentId ${customerDocumentId}:`, err);
+              return null;
+            }
+          }
+          return null;
+        });
+    
+        // Risolvi tutte le promesse dei clienti
+        const customerResults = await Promise.all(customerPromises);
+        const customersData = {};
+        customerResults.forEach((result) => {
+          if (result) {
+            Object.assign(customersData, result);
+          }
+        });
+    
+        setOrders(allOrders); // Salva gli ordini nello stato
+        setCustomers(customersData); // Salva i dati dei clienti nello stato
         setOrdersCount(allOrders.length);
       } catch (err) {
         console.error('Errore nel recupero degli ordini:', err);
         setOrderError('Non è stato possibile caricare gli ordini.');
       }
     };
+    
+    
   
     // Fetch utenti
     const fetchUsers = async () => {
       try {
-        const response = await axios.get(CLIENTS_URL);
-        setUsers(response.data.data);
+        const response = await axios.get(USERS_URL);
+        
+        // Mappa solo i campi che ti interessano
+        const formattedUsers = response.data.map((user) => ({
+          email: user.email || 'N/A',
+          nome: user.nome || 'N/A',
+          cognome: user.cognome || 'N/A',
+          indirizzo: user.indirizzo || 'N/A',
+        }));
+        
+        setUsers(formattedUsers); // Aggiorna lo stato con i dati filtrati
       } catch (err) {
         console.error('Errore nel caricamento dei dati utenti:', err);
         setError('Non è stato possibile caricare i dati degli utenti.');
       }
     };
-
+    
     const fetchProducts = async () => {
       try {
         const response = await axios.get('http://localhost:1337/api/prodottis?populate=*');
@@ -175,7 +219,7 @@ const [supplierToDelete, setSupplierToDelete] = useState(''); // Nome del fornit
             '/default-image.jpg';
     
           return {
-            id: product.id,
+            documentId: product.documentId,
             name: product.nome_prodotto,
             description: product.descrizione,
             price: product.prezzo_unitario,
@@ -220,35 +264,51 @@ const [supplierToDelete, setSupplierToDelete] = useState(''); // Nome del fornit
   // LOGICA MODIFICA PRODOTTO
   // ----------------------------
   const startEditing = (product) => {
-    setEditingProductId(product.id);
-    setEditingName(product.name);
-    setEditingPrice(product.price);
+    setEditingProductId(product.documentId); // Imposta il prodotto in modifica
+    setEditingName(product.name); // Carica il nome del prodotto
+    setEditingPrice(product.price); // Carica il prezzo
+    setEditingDescription(product.description); // Carica la descrizione
+    setEditingQuantity(product.quantity);
   };
-
+  
   const cancelEditing = () => {
-    setEditingProductId(null);
-    setEditingName('');
-    setEditingPrice('');
+    setEditingProductId(null); // Annulla la modifica
+    setEditingName(''); // Resetta il nome
+    setEditingPrice(''); // Resetta il prezzo
+    setEditingDescription(''); // Resetta la descrizione
   };
-
-  const saveProduct = async (productId) => {
+  
+  const saveProduct = async () => {
+    if (!editingName || !editingPrice) {
+      alert('Nome e Prezzo sono obbligatori!');
+      return;
+    }
+  
     try {
-      await axios.put(`${PRODUCTS_URL}/${productId}`, {
+      await axios.put(`${PRODUCTS_URL}/${editingProductId}`, {
         data: {
           nome_prodotto: editingName,
-          prezzo_unitario: Number(editingPrice),
+          prezzo_unitario: parseFloat(editingPrice),
+          descrizione: editingDescription,
+          quantita_disponibili: parseInt(editingQuantity, 10),
         },
       });
-
+  
       // Aggiorna lo stato locale
       setProducts((prev) =>
-        prev.map((p) =>
-          p.id === productId
-            ? { ...p, name: editingName, price: Number(editingPrice) }
-            : p
+        prev.map((product) =>
+          product.documentId === editingProductId
+            ? {
+                ...product,
+                name: editingName,
+                price: parseFloat(editingPrice),
+                description: editingDescription,
+                quantity: parseInt(editingQuantity, 10),
+              }
+            : product
         )
       );
-
+  
       cancelEditing();
       alert('Prodotto modificato con successo!');
     } catch (err) {
@@ -256,16 +316,20 @@ const [supplierToDelete, setSupplierToDelete] = useState(''); // Nome del fornit
       alert('Errore durante la modifica del prodotto.');
     }
   };
+  
 
-  const toggleProductsVisibility = (orderId) => {
-    const productListDiv = document.getElementById(`product-list-${orderId}`);
+  const toggleProductsVisibility = (documentId) => {
+    const productListDiv = document.getElementById(`product-list-${documentId}`);
     if (!productListDiv) return;
+  
     if (productListDiv.style.display === 'none' || !productListDiv.style.display) {
       productListDiv.style.display = 'block';
+      productListDiv.scrollIntoView({ behavior: 'smooth' });
     } else {
       productListDiv.style.display = 'none';
     }
   };
+  
 
   // ----------------------------
   // Filtri e Ordinamento Prodotti
@@ -828,15 +892,98 @@ const [supplierToDelete, setSupplierToDelete] = useState(''); // Nome del fornit
 </div>
 
 
-          <ProductGrid>
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id}>
-                <ProductImage src={product.image} alt={product.name} />
-                <ProductName>{product.name}</ProductName>
-                <ProductPrice>{`€${product.price.toFixed(2)}`}</ProductPrice>
-              </ProductCard>
-            ))}
-          </ProductGrid>
+<ProductGrid>
+  {filteredProducts.map((product) => (
+    <ProductCard key={product.documentId}>
+      <ProductImage src={product.image} alt={product.name} />
+      
+      {editingProductId === product.documentId ? (
+        <>
+          {/* Modifica del prodotto */}
+          <input
+            type="text"
+            value={editingName}
+            onChange={(e) => setEditingName(e.target.value)}
+            placeholder="Nome prodotto"
+            style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
+          />
+          <input
+            type="number"
+            value={editingPrice}
+            onChange={(e) => setEditingPrice(e.target.value)}
+            placeholder="Prezzo"
+            style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
+          />
+          <textarea
+            value={editingDescription}
+            onChange={(e) => setEditingDescription(e.target.value)}
+            placeholder="Descrizione"
+            rows="3"
+            style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
+          />
+           <input
+              type="number"
+              value={editingQuantity}
+              onChange={(e) => setEditingQuantity(e.target.value)}
+              placeholder="Quantità Disponibili"
+              style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
+            />
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={saveProduct}
+              style={{
+                padding: '5px 10px',
+                backgroundColor: '#28a745',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Salva
+            </button>
+            <button
+              onClick={cancelEditing}
+              style={{
+                padding: '5px 10px',
+                backgroundColor: '#dc3545',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Annulla
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Visualizzazione normale del prodotto */}
+          <ProductName>{product.name}</ProductName>
+          <ProductPrice>{`€${product.price.toFixed(2)}`}</ProductPrice>
+          <p>Quantità: {product.quantity}</p>
+          <button
+            onClick={() => startEditing(product)}
+            style={{
+              padding: '5px 10px',
+              backgroundColor: '#007bff',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            Modifica
+          </button>
+        </>
+      )}
+    </ProductCard>
+  ))}
+</ProductGrid>
+
+
+
         </MainContent>
       </CatalogContainer>
     )}
@@ -846,79 +993,128 @@ const [supplierToDelete, setSupplierToDelete] = useState(''); // Nome del fornit
 
           {/* SEZIONE ORDINI */}
           {activeSection === 'ordini' && (
-            <>
-              <h2>Gestione Ordini</h2>
-              {orderError ? (
-                <p style={{ color: 'red' }}>{orderError}</p>
-              ) : (
-                <div className="container">
-                  <div className="alert alert-info" role="alert" id="status-message">
-                    Caricamento in corso...
-                  </div>
-                  <div className="row">
-                    {orders.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: '20px' }}>
-                        <p>Nessun ordine trovato.</p>
-                      </div>
-                    ) : (
-                      orders.map((order) => {
-                        // Dati cliente: in base al JSON potresti averli in "order.attributes.cod_cliente"
-                        const attr = order.attributes || {};
-                        const cliente = attr.cod_cliente || {};
+  <>
+    <h2>Gestione Ordini</h2>
+    {orderError ? (
+      <p style={{ color: 'red' }}>{orderError}</p>
+    ) : (
+      <div style={{ marginTop: '20px' }}>
+        <table
+          style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            backgroundColor: '#fff',
+            marginBottom: '20px',
+          }}
+        >
+          <thead>
+            <tr style={{ backgroundColor: '#f5f5f5', textAlign: 'left' }}>
+              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                Document ID
+              </th>
+              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                Nome
+              </th>
+              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                Cognome
+              </th>
+              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                Azioni
+              </th>
+            </tr>
+          </thead>
+        
 
-                        return (
-                          <div key={order.id} className="col-md-6">
-                            <div
-                              className="order-card"
-                              style={{
-                                padding: '20px',
-                                border: '1px solid #ddd',
-                                marginBottom: '20px',
-                                backgroundColor: '#f9f9f9',
-                              }}
-                            >
-                              <h5 className="card-title">Ordine #{order.id}</h5>
-                              <p>
-                                <strong>ID Ordine:</strong> {order.id}
-                                <br />
-                                <strong>Data:</strong>{' '}
-                                {attr.data
-                                  ? new Date(attr.data).toLocaleString('it-IT')
-                                  : 'N/A'}
-                                <br />
-                                <strong>Stato:</strong> {attr.stato || 'N/A'}
-                                <br />
-                                <strong>Prezzo Totale:</strong> €
-                                {(attr.prezzo_totale ?? 0).toFixed(2)}
-                                <br />
-                                <strong>Cliente:</strong> {cliente.nome || 'N/A'}{' '}
-                                {cliente.cognome || ''}
-                                <br />
-                                <strong>Indirizzo:</strong> {cliente.indirizzo || 'N/A'}
-                              </p>
-                              <button
-                                className="btn btn-outline-primary btn-sm"
-                                onClick={() => toggleProductsVisibility(order.id)}
-                              >
-                                Dettagli Prodotti
-                              </button>
-                              <div
-                                id={`product-list-${order.id}`}
-                                style={{ display: 'none' }}
-                              >
-                                {/* Placeholder o elenco prodotti associati */}
-                                <p>Elenco prodotti per l'ordine #{order.id}...</p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+          <tbody>
+  {orders.map((order) => {
+    const customer = customers[order.user?.documentId] || {};
+    return (
+      <tr key={order.documentId}>
+        <td>{customer.nome || 'N/A'}</td>
+        <td>{customer.cognome || 'N/A'}</td>
+        <td>{customer.email || 'N/A'}</td>
+        <td>
+          <button
+            onClick={() => navigator.clipboard.writeText(order.documentId)}
+            style={{
+              padding: '5px 10px',
+              backgroundColor: '#007bff',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            Copia ordine
+          </button>
+        </td>
+        <td>
+          <button
+            onClick={() => toggleProductsVisibility(order.documentId)}
+            style={{
+              padding: '5px 10px',
+              backgroundColor: '#007bff',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            +
+          </button>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
+
+
+
+
+        </table>
+
+        {/* Dettagli dei prodotti per un ordine */}
+        {orders.map((order) => (
+          
+          
+          <div
+  key={order.documentId}
+  id={`product-list-${order.documentId}`}
+  style={{ display: 'none', marginBottom: '20px', padding: '10px', border: '1px solid #ddd' }}
+>
+  {/* Dati Cliente */}
+  <h4>Dettagli Cliente</h4>
+<p>
+  <strong>Nome:</strong> {customers[order.user?.documentId]?.nome || 'N/A'} <br />
+  <strong>Cognome:</strong> {customers[order.user?.documentId]?.cognome || 'N/A'} <br />
+  <strong>Email:</strong> {customers[order.user?.documentId]?.email || 'N/A'} <br />
+  <strong>Indirizzo:</strong> {customers[order.user?.documentId]?.indirizzo || 'N/A'} <br />
+</p>
+
+
+
+  {/* Dati Prodotti */}
+  <h4>Dettagli Prodotti</h4>
+  {products.length > 0 ? (
+    <ul>
+      {products.map((product, index) => (
+        <li key={index}>
+          <strong>{product.name}</strong> - Quantità: {product.quantity} - Prezzo: €
+          {product.price.toFixed(2)}
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p>Nessun prodotto associato a questo ordine.</p>
+  )}
+</div>
+
+        ))}
+      </div>
+    )}
+  </>
+)}
+
         </DashboardSection>
       </AdminContainer>
     </>
