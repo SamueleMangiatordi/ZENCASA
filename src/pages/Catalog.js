@@ -10,52 +10,55 @@ import {
   ProductGrid,
   ProductCard,
   ProductImage,
-  ProductTag,
   ProductName,
   ProductPrice,
-  //AddToCartButton,
-  //ColorCircle,
+  AddToCartButton, // Stile per pulsanti
 } from '../styles/StyledCatalog';
 import {
   Banner,
   Header,
   Title,
-  StyledButton,
+  StyledButton, // Usa questo per i link nella navbar
   Icon,
 } from '../styles/StyledComponents';
-import {PRODUCTS_URL} from '../data/api'; // Importa la funzione getProducts
-import ProductDetails from './ProductDetails'; // Import del componente dei dettagli
-
+import { PRODUCTS_URL } from '../data/api'; // URL delle API
+import { useNavigate } from 'react-router-dom';
 
 const ProductsCatalog = () => {
-  const [products, setProducts] = useState([]); // Stato per i prodotti recuperati
+  const [products, setProducts] = useState([]); // Stato per i prodotti
   const [loading, setLoading] = useState(true); // Stato di caricamento
   const [error, setError] = useState(null); // Stato per eventuali errori
-  const [selectedPriceRange, setSelectedPriceRange] = useState(null);
-  //const [selectedColors, setSelectedColors] = useState([]);
-  const [sortOption, setSortOption] = useState('I nostri preferiti');
-  const [selectedProduct, setSelectedProduct] = useState(null); // Stato per il prodotto selezionato
+  const [selectedPriceRange, setSelectedPriceRange] = useState(null); // Filtro prezzo
+  const [sortOption, setSortOption] = useState('I nostri preferiti'); // Ordinamento
+  const [cart, setCart] = useState(() => {
+    const savedCart = localStorage.getItem('cart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
+
+  const navigate = useNavigate(); // Per navigare tra le pagine
 
   // Recupera i prodotti da Strapi
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(`${PRODUCTS_URL}?populate=*`); // API di Strapi
+        const response = await fetch(`${PRODUCTS_URL}?populate=*`);
         if (!response.ok) {
           throw new Error(`Errore HTTP: ${response.status}`);
         }
         const data = await response.json();
 
-        console.log('Prodotti ricevuti:', data.data); // Log per verificare i dati
-
-        setProducts(data.data.map((product) => ({   
-          id: product.id,
-          documentId: product.documentId,
-          name: product.nome_prodotto,
-          image: product.immagine_prodotto?.[0]?.formats?.medium?.url ||  product.immagine_prodotto?.[0]?.formats?.small?.url,
-          description: product.descrizione,
-          price: product.prezzo_unitario,
-        })));
+        setProducts(
+          data.data.map((product) => ({
+            id: product.id,
+            documentId: product.documentId,
+            name: product.nome_prodotto,
+            image:
+              product.immagine_prodotto?.[0]?.formats?.medium?.url ||
+              product.immagine_prodotto?.[0]?.formats?.small?.url,
+            description: product.descrizione,
+            price: product.prezzo_unitario,
+          }))
+        );
         setLoading(false);
       } catch (err) {
         setError('Impossibile recuperare i dati');
@@ -66,29 +69,26 @@ const ProductsCatalog = () => {
     fetchProducts();
   }, []);
 
-  const priceRanges = [
-    { label: 'Fino a 20 euro', maxPrice: 20 },
-    //{ label: 'Fino a 50 euro', maxPrice: 50 },
-    //{ label: 'Fino a 100 euro', maxPrice: 100 },
-  ];
+  // Funzione per aggiungere al carrello
+  const addToCart = (product) => {
+    const existingProduct = cart.find((item) => item.id === product.id);
 
-  /*const colors = [
-    { name: 'Beige', color: '#f5deb3' },
-    { name: 'Grigio', color: '#808080' },
-    { name: 'Bianco', color: '#ffffff' },
-  ];*/
+    if (existingProduct) {
+      const updatedCart = cart.map((item) =>
+        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+      );
+      setCart(updatedCart);
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
+    } else {
+      const updatedCart = [...cart, { ...product, quantity: 1 }];
+      setCart(updatedCart);
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
+    }
+  };
 
   const handlePriceRangeChange = (maxPrice) => {
     setSelectedPriceRange(maxPrice === selectedPriceRange ? null : maxPrice);
   };
-
-  /*const handleColorChange = (color) => {
-    setSelectedColors((prevSelected) =>
-      prevSelected.includes(color)
-        ? prevSelected.filter((c) => c !== color)
-        : [...prevSelected, color]
-    );
-  };*/
 
   const handleSortChange = (option) => {
     setSortOption(option);
@@ -103,16 +103,9 @@ const ProductsCatalog = () => {
 
   // Filtraggio dei prodotti
   let filteredProducts = products.filter((product) => {
-    console.log('Confronto prezzo:', product.price, selectedPriceRange);
-
     const matchesPrice =
       selectedPriceRange !== null ? product.price <= selectedPriceRange : true;
-    /*const matchesColor = selectedColors.length
-      ? selectedColors.includes(product.color)
-      : true;*/
-
     return matchesPrice;
-    //return matchesPrice && matchesColor;
   });
 
   // Ordinamento dei prodotti
@@ -133,13 +126,11 @@ const ProductsCatalog = () => {
     return <p>{error}</p>;
   }
 
-  const handleProductClick = (product) => setSelectedProduct(product); // Seleziona prodotto
-  const handleBackToCatalog = () => setSelectedProduct(null); // Torna al catalogo
-
   return (
     <>
+      {/* Banner e Navigation Bar */}
       <Banner>Spedizione gratuita per ordini superiori a 50 euro</Banner>
-      <Header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1% 5%' }}>
+      <Header style={{ display: 'flex', justifyContent: 'space-between', padding: '1% 5%' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Title>Zencasa</Title>
           <nav style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -159,16 +150,18 @@ const ProductsCatalog = () => {
           <StyledButton to="/login" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <Icon>👤</Icon>
           </StyledButton>
-          <StyledButton to="/cart" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <Icon>🛍️</Icon>
-          </StyledButton>
+          <AddToCartButton onClick={() => navigate('/cart')}>
+            🛒 Carrello ({cart.reduce((total, item) => total + item.quantity, 0)})
+          </AddToCartButton>
         </div>
       </Header>
 
+      {/* Catalogo */}
       <CatalogContainer>
+        {/* Filtri Laterali */}
         <Sidebar>
           <FilterTitle>Prezzo</FilterTitle>
-          {priceRanges.map((range, index) => (
+          {[{ label: 'Fino a 20 euro', maxPrice: 20 }].map((range, index) => (
             <FilterOption key={index}>
               <Checkbox
                 type="checkbox"
@@ -178,27 +171,9 @@ const ProductsCatalog = () => {
               {range.label}
             </FilterOption>
           ))}
-
-          {/*<FilterTitle>Colore</FilterTitle>
-          {colors.map((color, index) => (
-            <FilterOption key={index}>
-              <ColorCircle color={color.color} />
-              <Checkbox
-                type="checkbox"
-                checked={selectedColors.includes(color.name)}
-                onChange={() => handleColorChange(color.name)}
-              />
-              {color.name}
-            </FilterOption>
-          ))*/}
         </Sidebar>
 
-        {selectedProduct ? (
-          <MainContent>
-            <button onClick={handleBackToCatalog} style={{ marginBottom: '20px' }}>← Torna al catalogo</button>
-            <ProductDetails selectedProduct={selectedProduct} />
-          </MainContent>
-        ) : (
+        {/* Sezione Principale */}
         <MainContent>
           <SortContainer>
             <span>Ordina:</span>
@@ -214,17 +189,21 @@ const ProductsCatalog = () => {
           </SortContainer>
 
           <ProductGrid>
-            {products.map((product) => (
-              <ProductCard key={product.id} onClick={() => handleProductClick(product)}>
-                <ProductImage src={`http://localhost:1337${product.image}`} alt={product.name} />
+            {filteredProducts.map((product) => (
+              <ProductCard key={product.id}>
+                <ProductImage
+                  src={`http://localhost:1337${product.image}`}
+                  alt={product.name}
+                />
                 <ProductName>{product.name}</ProductName>
                 <ProductPrice>{`€${product.price.toFixed(2)}`}</ProductPrice>
-                {/*<AddToCartButton>Aggiungi al carrello</AddToCartButton>*/}
+                <AddToCartButton onClick={() => addToCart(product)}>
+                  Aggiungi al carrello
+                </AddToCartButton>
               </ProductCard>
             ))}
           </ProductGrid>
         </MainContent>
-        )}
       </CatalogContainer>
     </>
   );
