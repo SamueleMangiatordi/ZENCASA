@@ -95,8 +95,11 @@ const AdminPage = () => {
   // Numero totale ordini (indipendentemente dai 7 giorni)
   const [ordersCount, setOrdersCount] = useState(0);
 
-  // Stato per salvare l'intera lista di ordini dalla tua API
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState([]); // Stato per gli ordini
+
+const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricamento ordini
+
+
 
   // Dati utenti
   const [users, setUsers] = useState([]);
@@ -128,6 +131,8 @@ const AdminPage = () => {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [productsError, setProductsError] = useState(null);
   const [editingQuantity, setEditingQuantity] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
 
 
  
@@ -353,7 +358,10 @@ const AdminPage = () => {
   };
 
 
-  const filteredProducts = products;
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
 
 
   return (
@@ -888,8 +896,23 @@ const AdminPage = () => {
       <CatalogContainer style={{ marginTop: '20px' }}>
         <MainContent>
         <div style={{ marginBottom: '20px' }}>
-  <span>{products.length} Prodotti trovati</span>
+        <input
+              type="text"
+              placeholder="Cerca prodotto..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+              }}
+            />
 </div>
+
+<div style={{ marginBottom: '20px' }}>
+            <span>{filteredProducts.length} Prodotti trovati</span>
+          </div>
 
 
 <ProductGrid>
@@ -992,9 +1015,11 @@ const AdminPage = () => {
 
 
           {/* SEZIONE ORDINI */}
+          
           {activeSection === 'ordini' && (
   <>
     <h2>Gestione Ordini</h2>
+
     {orderError ? (
       <p style={{ color: 'red' }}>{orderError}</p>
     ) : (
@@ -1010,7 +1035,16 @@ const AdminPage = () => {
           <thead>
             <tr style={{ backgroundColor: '#f5f5f5', textAlign: 'left' }}>
               <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                Document ID
+                Ordine DocID
+              </th>
+              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                Data
+              </th>
+              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                Stato
+              </th>
+              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                Prezzo Totale
               </th>
               <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
                 Nome
@@ -1019,101 +1053,97 @@ const AdminPage = () => {
                 Cognome
               </th>
               <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                Email
+              </th>
+              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
                 Azioni
               </th>
             </tr>
           </thead>
-        
 
           <tbody>
   {orders.map((order) => {
-    const customer = customers[order.user?.documentId] || {};
+    const { id, documentId, cod_ordine } = order;
+    
+    // Se esiste cod_ordine, estrai i campi
+    let codDocumento, dataOrdine, stato, prezzoTotale, userData;
+    if (cod_ordine) {
+      codDocumento = cod_ordine.documentId;
+      dataOrdine = cod_ordine.data ? new Date(cod_ordine.data).toLocaleString() : '—';
+      stato = cod_ordine.stato;
+      prezzoTotale = cod_ordine.prezzo_totale;
+      userData = cod_ordine.user || {};
+    }
+
     return (
-      <tr key={order.documentId}>
-        <td>{customer.nome || 'N/A'}</td>
-        <td>{customer.cognome || 'N/A'}</td>
-        <td>{customer.email || 'N/A'}</td>
+      <tr key={id}>
+        <td>{codDocumento ?? '—'}</td>
+        <td>{dataOrdine ?? '—'}</td>
+        <td>{stato ?? '—'}</td>
+        <td>{prezzoTotale ?? '—'}</td>
+        <td>{userData?.nome ?? '—'}</td>
+        <td>{userData?.cognome ?? '—'}</td>
+        <td>{userData?.email ?? '—'}</td>
         <td>
-          <button
-            onClick={() => navigator.clipboard.writeText(order.documentId)}
-            style={{
-              padding: '5px 10px',
-              backgroundColor: '#007bff',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            Copia ordine
-          </button>
-        </td>
-        <td>
-          <button
-            onClick={() => toggleProductsVisibility(order.documentId)}
-            style={{
-              padding: '5px 10px',
-              backgroundColor: '#007bff',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            +
-          </button>
+          {!cod_ordine ? (
+            <>Nessun "cod_ordine" per questo record</>
+          ) : (
+            <>
+              <button onClick={() => navigator.clipboard.writeText(codDocumento)}>
+                Copia ordine
+              </button>
+              <button onClick={() => toggleProductsVisibility(codDocumento)}>
+                +
+              </button>
+            </>
+          )}
         </td>
       </tr>
     );
   })}
 </tbody>
 
-
-
-
         </table>
 
-        {/* Dettagli dei prodotti per un ordine */}
-        {orders.map((order) => (
-          
-          
-          <div
-  key={order.documentId}
-  id={`product-list-${order.documentId}`}
-  style={{ display: 'none', marginBottom: '20px', padding: '10px', border: '1px solid #ddd' }}
->
-  {/* Dati Cliente */}
-  <h4>Dettagli Cliente</h4>
-<p>
-  <strong>Nome:</strong> {customers[order.user?.documentId]?.nome || 'N/A'} <br />
-  <strong>Cognome:</strong> {customers[order.user?.documentId]?.cognome || 'N/A'} <br />
-  <strong>Email:</strong> {customers[order.user?.documentId]?.email || 'N/A'} <br />
-  <strong>Indirizzo:</strong> {customers[order.user?.documentId]?.indirizzo || 'N/A'} <br />
-</p>
+        {/* 
+          Nel tuo codice, mostri un blocco di dettagli (prodotti, indirizzo, etc.)
+          sotto ogni ordine. Ecco come potresti farlo, se la chiave è "cod_ordine.documentId".
+        */}
+        {orders.map((order) => {
+          // Attenzione: se cod_ordine non esiste, gestiscilo
+          const codDocumento = order.cod_ordine?.documentId;
+          const user = order.cod_ordine?.user || {};
 
+          return (
+            <div
+              key={`product-list-${codDocumento}`}
+              id={`product-list-${codDocumento}`}
+              style={{
+                display: 'none',
+                marginBottom: '20px',
+                padding: '10px',
+                border: '1px solid #ddd',
+              }}
+            >
+              <h4>Dettagli Cliente</h4>
+              <p>
+                <strong>Nome:</strong> {user.nome || 'N/A'} <br />
+                <strong>Cognome:</strong> {user.cognome || 'N/A'} <br />
+                <strong>Email:</strong> {user.email || 'N/A'} <br />
+                {/* Qui puoi mostrare altre info: user.indirizzo, ecc. */}
+              </p>
 
-
-  {/* Dati Prodotti */}
-  <h4>Dettagli Prodotti</h4>
-  {products.length > 0 ? (
-    <ul>
-      {products.map((product, index) => (
-        <li key={index}>
-          <strong>{product.name}</strong> - Quantità: {product.quantity} - Prezzo: €
-          {product.price.toFixed(2)}
-        </li>
-      ))}
-    </ul>
-  ) : (
-    <p>Nessun prodotto associato a questo ordine.</p>
-  )}
-</div>
-
-        ))}
+              <h4>Dettagli Prodotti</h4>
+              <p>TODO: se hai la lista dei prodotti (es. order.cod_ordine.prodotti)</p>
+            </div>
+          );
+        })}
       </div>
     )}
   </>
 )}
+
+
 
         </DashboardSection>
       </AdminContainer>

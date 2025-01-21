@@ -15,6 +15,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Catalog from './pages/Catalog';
 import User from './pages/User';
+import ServicePage from './pages/ServicePage';
 
 import {AuthProvider} from "./data/authContext";
 
@@ -63,6 +64,7 @@ function App() {
           <Route path="/cart" element={<Cart cartItems={cartItems || []} />} />
           <Route path="/checkout" element={<Checkout cartItems={cartItems || []} />} />
           <Route path="/user" element={<User/>} />
+          <Route path="/service" element={<ServicePage />} />
         </Routes>
       </div>
     </Router>
