@@ -1,5 +1,41 @@
 import React, { useState, useEffect } from "react";
-import { fetchProducts, fetchProductById } from "../data/api";
+import { useNavigate } from "react-router-dom";
+
+import {
+  AddToCartButton,
+  ProductDetails,
+  ProductName,
+  ProductPrice,
+  ControlButton,
+  DropdownWrapper,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem,
+  CartContainer,
+  ProductList,
+  ProductCard,
+  ProductInfo,
+  QuantityControls,
+  RemoveButton,
+  SummarySection,
+  SummaryItem,
+  TotalPrice,
+  CheckoutButton,
+  FreeShippingContainer,
+  ProgressBarOuter,
+  ProgressBarInner,
+  ProgressLabels,
+  HighlightText,
+} from "../styles/StyledCart";
+
+import { 
+  Banner, 
+  Header, 
+  Title, 
+  StyledButton,
+} from "../styles/StyledComponents";
+
+import { fetchProducts } from "../data/api";
 
 const Cart = () => {
   const [products, setProducts] = useState([]);
@@ -7,9 +43,11 @@ const Cart = () => {
     const savedCart = localStorage.getItem("cart");
     return savedCart ? JSON.parse(savedCart) : [];
   });
-  const [selectedProduct, setSelectedProduct] = useState(null);
 
-  // Recupera i prodotti al montaggio del componente
+  const SHIPPING_COST = 5.6;
+  const FREE_SHIPPING_THRESHOLD = 50;
+  const DISCOUNT_THRESHOLD = 100;
+
   useEffect(() => {
     const getProducts = async () => {
       try {
@@ -22,184 +60,206 @@ const Cart = () => {
     getProducts();
   }, []);
 
-  // Debug per verificare i dati del carrello
-  useEffect(() => {
-    console.log("Stato del carrello:", cart);
-  }, [cart]);
-
-  // Funzione per aggiungere un prodotto al carrello
-  const addToCart = (product) => {
-    const existingProduct = cart.find((item) => item.id === product.id);
-    if (existingProduct) {
-      const updatedCart = cart.map((item) =>
-        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-      );
-      setCart(updatedCart);
-      localStorage.setItem("cart", JSON.stringify(updatedCart));
-    } else {
-      const updatedCart = [...cart, { ...product, quantity: 1 }];
-      setCart(updatedCart);
-      localStorage.setItem("cart", JSON.stringify(updatedCart));
-    }
-  };
-
-  // Funzione per rimuovere un prodotto dal carrello
-  const removeFromCart = (id) => {
-    const updatedCart = cart.filter((item) => item.id !== id);
+  const increaseQuantity = (documentId) => {
+    const updatedCart = cart.map((item) =>
+      item.documentId === documentId ? { ...item, quantity: item.quantity + 1 } : item
+    );
     setCart(updatedCart);
     localStorage.setItem("cart", JSON.stringify(updatedCart));
   };
 
+  const decreaseQuantity = (documentId) => {
+    const updatedCart = cart
+      .map((item) =>
+        item.documentId === documentId && item.quantity > 1
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      )
+      .filter((item) => item.quantity > 0);
+    setCart(updatedCart);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+  };
+
+  const removeFromCart = (documentId) => {
+    const updatedCart = cart.filter((item) => item.documentId !== documentId);
+    setCart(updatedCart);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+  };
+
+  const totalCost = cart.reduce((total, item) => {
+    const product = products.find((prod) => prod.documentId === item.documentId);
+    const price = product ? product.prezzo_unitario : 0;
+    return total + item.quantity * price;
+  }, 0);
+
+  const shippingCost = totalCost >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+  const discount = totalCost >= DISCOUNT_THRESHOLD ? totalCost * 0.1 : 0;
+
   return (
-    <div style={{ padding: "20px", maxWidth: "1200px", margin: "auto" }}>
-      {/* Titolo */}
-      <h1 style={{ fontSize: "24px", marginBottom: "20px" }}>Il tuo carrello</h1>
-
-      {/* Catalogo Prodotti */}
-      <h2 style={{ fontSize: "20px", marginBottom: "20px" }}>Catalogo Prodotti</h2>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-          gap: "20px",
-        }}
-      >
-        {products.map((product) => (
-          <div
-            key={product.id}
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: "5px",
-              padding: "15px",
-              backgroundColor: "#fff",
-            }}
-          >
-            <h3 style={{ fontSize: "18px", marginBottom: "10px" }}>
-              {product.nome_prodotto}
-            </h3>
-            <p style={{ fontSize: "16px", marginBottom: "10px" }}>
-              Prezzo:{" "}
-              <strong>
-                €
-                {product.prezzo_unitario
-                  ? product.prezzo_unitario.toFixed(2)
-                  : "Prezzo non disponibile"}
-              </strong>
-            </p>
-            <button
-              onClick={() => addToCart(product)}
-              style={{
-                backgroundColor: "#007bff",
-                color: "white",
-                border: "none",
-                padding: "10px 15px",
-                borderRadius: "5px",
-                cursor: "pointer",
-                marginRight: "10px",
-              }}
+    <>
+      <Banner>Spedizione gratuita per ordini superiori a 50 euro</Banner>
+      <Header>
+        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+          <Title>Zencasa</Title>
+          <nav style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+            <StyledButton to="/">HOME</StyledButton>
+            <StyledButton to="/products">CATALOGO</StyledButton>
+            <StyledButton
+              as="a"
+              href="https://wa.me/393883816904"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              Aggiungi al carrello
-            </button>
-            <button
-              onClick={() => setSelectedProduct(product)}
-              style={{
-                backgroundColor: "#6c757d",
-                color: "white",
-                border: "none",
-                padding: "10px 15px",
-                borderRadius: "5px",
-                cursor: "pointer",
-              }}
-            >
-              Dettagli
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Dettagli Prodotto */}
-      {selectedProduct && (
-        <div
-          style={{
-            marginTop: "40px",
-            border: "1px solid #ddd",
-            borderRadius: "5px",
-            padding: "20px",
-            backgroundColor: "#f9f9f9",
-          }}
-        >
-          <h2 style={{ fontSize: "20px", marginBottom: "10px" }}>
-            Dettagli Prodotto
-          </h2>
-          <h3>{selectedProduct.nome_prodotto}</h3>
-          <p>{selectedProduct.descrizione}</p>
-          <p>
-            Prezzo:{" "}
-            {selectedProduct.prezzo_unitario
-              ? `€${selectedProduct.prezzo_unitario.toFixed(2)}`
-              : "Prezzo non disponibile"}
-          </p>
-          <p>Quantità disponibili: {selectedProduct.quantita_disponibili}</p>
+              CONTATTI
+            </StyledButton>
+          </nav>
         </div>
-      )}
+      </Header>
 
-      {/* Carrello */}
-      <h2 style={{ fontSize: "20px", marginTop: "40px", marginBottom: "20px" }}>
-        Il tuo carrello
-      </h2>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "20px",
-        }}
-      >
-        {cart.length === 0 ? (
-          <p>Il carrello è vuoto</p>
-        ) : (
-          cart.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: "5px",
-                padding: "15px",
-                backgroundColor: "#fff",
-              }}
-            >
-              <h3 style={{ fontSize: "18px", marginBottom: "10px" }}>
-                {item.nome_prodotto}
-              </h3>
-              <p style={{ fontSize: "16px", marginBottom: "10px" }}>
-                Prezzo:{" "}
-                <strong>
-                  €
-                  {item.prezzo_unitario
-                    ? item.prezzo_unitario.toFixed(2)
-                    : "Prezzo non disponibile"}
-                </strong>
-              </p>
-              <p style={{ fontSize: "16px", marginBottom: "10px" }}>
-                Quantità: <strong>{item.quantity}</strong>
-              </p>
-              <button
-                onClick={() => removeFromCart(item.id)}
+      <CartContainer style={{ display: "flex", justifyContent: "space-between" }}>
+        {/* Colonna Sinistra */}
+        <div style={{ flex: "2", paddingRight: "20px" }}>
+          <FreeShippingContainer style={{ marginBottom: "20px" }}>
+            <p style={{ textAlign: "center", marginBottom: "5px", fontSize: "1rem" }}>
+              {totalCost >= FREE_SHIPPING_THRESHOLD
+                ? totalCost >= DISCOUNT_THRESHOLD
+                  ? "Complimenti! Spedizione gratuita e sconto 10% applicato 🎉"
+                  : "Complimenti! La spedizione è gratuita 🎉"
+                : `Mancano €${(FREE_SHIPPING_THRESHOLD - totalCost).toFixed(2)} per la spedizione gratuita!`}
+            </p>
+            <ProgressBarOuter style={{ height: "6px", backgroundColor: "#ddd" }}>
+              <ProgressBarInner
                 style={{
-                  backgroundColor: "#f44336",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 15px",
-                  borderRadius: "5px",
-                  cursor: "pointer",
+                  width: `${Math.min((totalCost / FREE_SHIPPING_THRESHOLD) * 100, 100)}%`,
+                  backgroundColor: "#ff7f50",
                 }}
-              >
-                Rimuovi
-              </button>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+              />
+            </ProgressBarOuter>
+            <ProgressLabels>
+              <HighlightText>Spedizione Gratuita</HighlightText>
+              <HighlightText>Sconto 10% (oltre 100€)</HighlightText>
+            </ProgressLabels>
+          </FreeShippingContainer>
+
+          <ProductList>
+            {cart.map((item) => {
+              const product = products.find((prod) => prod.documentId === item.documentId);
+              if (!product) return null;
+
+              return (
+                <ProductCard key={item.documentId}>
+                  <ProductInfo>
+                    <span
+                      style={{
+                        fontWeight: "bold",
+                        fontSize: "1.2rem",
+                        marginBottom: "5px",
+                        display: "block",
+                      }}
+                    >
+                      📦 {product.nome_prodotto} 📦
+                    </span>
+                    <span style={{ color: "#555", fontSize: "1rem", display: "block" }}>
+                      💶 Prezzo unitario: €{product.prezzo_unitario.toFixed(2)}
+                    </span>
+                  </ProductInfo>
+                  <QuantityControls style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <button
+                      onClick={() => decreaseQuantity(item.documentId)}
+                      style={{
+                        backgroundColor: "red",
+                        color: "white",
+                        border: "none",
+                        padding: "5px 10px",
+                        cursor: "pointer",
+                        borderRadius: "5px",
+                      }}
+                    >
+                      -
+                    </button>
+                    <span style={{ margin: "0 10px" }}>{item.quantity}</span>
+                    <button
+                      onClick={() => increaseQuantity(item.documentId)}
+                      style={{
+                        backgroundColor: "green",
+                        color: "white",
+                        border: "none",
+                        padding: "5px 10px",
+                        cursor: "pointer",
+                        borderRadius: "5px",
+                      }}
+                    >
+                      +
+                    </button>
+                  </QuantityControls>
+                  <div style={{ marginTop: "15px" }}>
+                    <span
+                      style={{
+                        fontWeight: "bold",
+                        fontSize: "1.2rem",
+                        color: "#000",
+                        display: "block",
+                        marginBottom: "15px",
+                      }}
+                    >
+                      €{(item.quantity * product.prezzo_unitario).toFixed(2)}
+                    </span>
+                    <button
+                      onClick={() => removeFromCart(item.documentId)}
+                      style={{
+                        backgroundColor: "red",
+                        color: "white",
+                        border: "none",
+                        padding: "10px 15px",
+                        cursor: "pointer",
+                        borderRadius: "5px",
+                        marginTop: "30px",
+                      }}
+                    >
+                      Rimuovi
+                    </button>
+                  </div>
+                </ProductCard>
+              );
+            })}
+          </ProductList>
+        </div>
+
+        {/* Colonna Destra: Riepilogo Ordine */}
+        <SummarySection style={{ flex: "1" }}>
+          <h2>Riepilogo dell'ordine</h2>
+          <SummaryItem>
+            <span>Subtotale</span> <span>€{totalCost.toFixed(2)}</span>
+          </SummaryItem>
+          <SummaryItem>
+            <span>Spedizione</span>{" "}
+            <span>{shippingCost > 0 ? `€${shippingCost.toFixed(2)}` : "Gratuita 🎉"}</span>
+          </SummaryItem>
+          <SummaryItem>
+            <span>Sconto</span>{" "}
+            <span>{discount > 0 ? `-€${discount.toFixed(2)}` : "Nessuno"}</span>
+          </SummaryItem>
+          <TotalPrice>
+            <span>Totale</span>{" "}
+            <span>€{(totalCost + shippingCost - discount).toFixed(2)}</span>
+          </TotalPrice>
+          <CheckoutButton
+            to="/checkout"
+            style={{
+              backgroundColor: "#ccc",
+              color: "black",
+              fontWeight: "bold",
+              fontSize: "1rem",
+              transition: "background-color 0.3s",
+            }}
+            onMouseEnter={(e) => (e.target.style.backgroundColor = "#ff7f50")}
+            onMouseLeave={(e) => (e.target.style.backgroundColor = "#ccc")}
+          >
+            Procedi al pagamento
+          </CheckoutButton>
+        </SummarySection>
+      </CartContainer>
+    </>
   );
 };
 

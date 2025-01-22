@@ -1,78 +1,107 @@
 import styled from 'styled-components';
-import { Link } from 'react-router-dom';
 
 export const CartContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  padding: 40px;
-  font-family: 'Arial', sans-serif;
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
 `;
 
+export const Title = styled.h1`
+  font-size: 28px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+
+  span:last-child {
+    margin-left: 10px;
+    font-size: 24px;
+  }
+`;
+
+export const FreeShippingMessage = styled.div`
+  background-color: #f8f9fa;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  text-align: center;
+
+  p {
+    font-size: 16px;
+    margin: 0;
+  }
+`;
+
+
 export const ProductList = styled.div`
-  width: 65%;
+  margin-bottom: 40px;
 `;
 
 export const ProductCard = styled.div`
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
+  align-items: center;
   border-bottom: 1px solid #ddd;
-  padding: 20px 0;
-`;
-
-export const ProductDetails = styled.div`
-  display: flex;
-  gap: 20px;
-`;
-
-export const ProductImage = styled.img`
-  width: 120px;
-  height: 120px;
-  border-radius: 8px;
-  object-fit: cover;
+  padding: 15px 0;
 `;
 
 export const ProductInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-`;
+  h3 {
+    font-size: 18px;
+    margin: 0 0 10px 0;
+  }
 
-export const ProductName = styled.h4`
-  font-size: 18px;
-  margin: 0;
-`;
-
-export const ProductPrice = styled.span`
-  font-size: 18px;
-  color: #b22222;
+  p {
+    margin: 0;
+    font-size: 16px;
+  }
 `;
 
 export const QuantityControls = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+
+  button {
+    border: 1px solid #ccc;
+    background-color: transparent;
+    padding: 5px 10px;
+    font-size: 16px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #f1f1f1;
+    }
+  }
+
+  span {
+    margin: 0 10px;
+    font-size: 16px;
+  }
 `;
 
-export const ControlButton = styled.button`
-  width: 32px;
-  height: 32px;
-  border: 1px solid #ddd;
-  background-color: white;
-  font-size: 16px;
+export const RemoveButton = styled.button`
+  background-color: transparent;
+  border: none;
+  color: #dc3545;
   cursor: pointer;
+  font-size: 14px;
 
   &:hover {
-    background-color: #f1f1f1;
+    text-decoration: underline;
   }
 `;
 
 export const SummarySection = styled.div`
-  width: 30%;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 20px;
-  background-color: #fafafa;
+  background-color: #f8f9fa;
+
+  h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
 `;
 
 export const SummaryItem = styled.div`
@@ -82,27 +111,106 @@ export const SummaryItem = styled.div`
   font-size: 16px;
 `;
 
-export const TotalPrice = styled.div`
+export const TotalPrice = styled.h3`
   display: flex;
   justify-content: space-between;
   font-size: 20px;
-  font-weight: bold;
-  margin-top: 20px;
+  margin-bottom: 20px;
 `;
 
-export const CheckoutButton = styled(Link)`
-  display: block;
-  width: 100%;
-  padding: 12px 0;
-  text-align: center;
-  background-color: #b22222;
+export const CheckoutButton = styled.button`
+  background-color: #007bff;
   color: white;
-  border-radius: 4px;
-  text-decoration: none;
-  font-weight: bold;
-  margin-top: 20px;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 16px;
 
   &:hover {
-    background-color: #9b1c1c;
+    background-color: #0056b3;
+  }
+`;
+
+export const FreeShippingContainer = styled.div`
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+
+  p {
+    font-size: 16px;
+    margin: 0 0 10px;
+  }
+`;
+
+
+export const ProgressBarOuter = styled.div`
+  height: 20px;
+  background: #f1f1f1;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 10px;
+  display: flex;
+`;
+
+export const ProgressBarInner = styled.div`
+  background-color: ${(props) => props.color || "#28a745"};
+  width: ${(props) => props.width || "0%"};
+  transition: width 0.3s ease;
+`;
+
+export const ProgressLabels = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 14px;
+  color: #6c757d;
+`;
+
+export const HighlightText = styled.span`
+  font-weight: bold;
+  color: ${(props) => props.color || "#007bff"};
+`;
+
+export const AddToCartButton = styled.button`
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  &:hover {
+    background-color: #0056b3;
+  }
+`;
+
+export const ProductDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+export const ProductName = styled.h3`
+  font-size: 18px;
+  margin: 0;
+`;
+
+export const ProductPrice = styled.span`
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+`;
+
+export const ControlButton = styled.button`
+  border: 1px solid #ccc;
+  background-color: transparent;
+  padding: 5px 10px;
+  cursor: pointer;
+  &:hover {
+    background-color: #f1f1f1;
   }
 `;
