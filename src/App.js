@@ -12,7 +12,6 @@ import CompletaProfilo from './pages/CompletaProfilo';
 import ProductsCatalog from './pages/Catalog';
 import ProductDetails from './pages/ProductDetails'; // Import del componente pagina di dettaglio
 import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
 import Catalog from './pages/Catalog';
 import User from './pages/User';
 import ServicePage from './pages/ServicePage';
@@ -62,7 +61,6 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/completa-profilo" element={<CompletaProfilo />} />
           <Route path="/cart" element={<Cart cartItems={cartItems || []} />} />
-          <Route path="/checkout" element={<Checkout cartItems={cartItems || []} />} />
           <Route path="/user" element={<User/>} />
           <Route path="/service" element={<ServicePage />} />
         </Routes>
