@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
-
+  API_URL,
   PRODUCTS_URL,
   USERS_URL,
 } from '../data/api';
@@ -60,6 +60,7 @@ const AdminPage = () => {
 
   const [showDeleteForm, setShowDeleteForm] = useState(false); // Mostra/Nascondi il form di eliminazione
   const [supplierToDelete, setSupplierToDelete] = useState(''); // Nome del fornitore da eliminare
+  const [openOrderDocumentIds, setOpenOrderDocumentIds] = useState([]); // Traccia i documentId aperti
 
 
   // Funzione per aggiungere un nuovo fornitore
@@ -143,7 +144,13 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
   const [editingDescription, setEditingDescription] = useState('');
   const [customers, setCustomers] = useState({});
 
-
+  const toggleOrderDetails = (documentId) => {
+    setOpenOrderDocumentIds((prevState) =>
+      prevState.includes(documentId)
+        ? prevState.filter((id) => id !== documentId) // Rimuovi il documentId per chiudere
+        : [...prevState, documentId] // Aggiungi il documentId per aprire
+    );
+  };
   // ----------------------------
   // USEEFFECT
   // ----------------------------
@@ -151,7 +158,8 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
     // Fetch ordini
     const fetchOrders = async () => {
       try {
-        const response = await axios.get('http://localhost:1337/api/ordinis?populate=*');
+
+        const response = await axios.get(`${API_URL}/ordine-prodottos?populate[cod_ordine][populate]=user&populate=cod_prodotto`);
         const allOrders = response.data.data || [];
     
         // Recupera i dettagli dei clienti usando `documentId`
@@ -159,7 +167,7 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
           const customerDocumentId = order.user?.documentId;
           if (customerDocumentId) {
             try {
-              const customerResponse = await axios.get(`http://localhost:1337/api/users/${customerDocumentId}`);
+              const customerResponse = await axios.get(`${API_URL}/users/${customerDocumentId}`);
               return { [customerDocumentId]: customerResponse.data };
             } catch (err) {
               console.error(`Errore nel recupero dei dettagli del cliente con documentId ${customerDocumentId}:`, err);
@@ -187,7 +195,7 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
       }
     };
     
-    
+
   
     // Fetch utenti
     const fetchUsers = async () => {
@@ -211,7 +219,7 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
     
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('http://localhost:1337/api/prodottis?populate=*');
+        const response = await axios.get(`${API_URL}/prodottis?populate=*`);
         const data = response.data;
     
         const mappedProducts = data.data.map((product) => {
@@ -1019,125 +1027,129 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
           {activeSection === 'ordini' && (
   <>
     <h2>Gestione Ordini</h2>
-
     {orderError ? (
       <p style={{ color: 'red' }}>{orderError}</p>
     ) : (
       <div style={{ marginTop: '20px' }}>
-        <table
-          style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            backgroundColor: '#fff',
-            marginBottom: '20px',
-          }}
-        >
-          <thead>
-            <tr style={{ backgroundColor: '#f5f5f5', textAlign: 'left' }}>
-              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                Ordine DocID
-              </th>
-              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                Data
-              </th>
-              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                Stato
-              </th>
-              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                Prezzo Totale
-              </th>
-              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                Nome
-              </th>
-              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                Cognome
-              </th>
-              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                Email
-              </th>
-              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                Azioni
-              </th>
-            </tr>
-          </thead>
+        {orders.length > 0 ? (
+          <table
+            style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              backgroundColor: '#fff',
+              marginBottom: '20px',
+            }}
+          >
+            <thead>
+              <tr style={{ backgroundColor: '#f5f5f5', textAlign: 'left' }}>
+                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Ordine ID</th>
+                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Data</th>
+                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Stato</th>
+                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Prezzo Totale</th>
+                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Cliente</th>
+                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Azioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => {
+                const ordine = order.cod_ordine || {};
+                const user = ordine.user || {};
+                const prodotto = order.cod_prodotto || {};
+                const isOpen = openOrderDocumentIds.includes(ordine.documentId); // Controlla se il gruppo è aperto
+                // Funzione per copiare i dati negli appunti
+                const copyOrderDetails = () => {
+                  const textToCopy = `
+                    Document ID: ${ordine.documentId || 'N/A'}
+                    Nome Prodotto: ${prodotto.nome_prodotto || 'N/A'}
+                    Nome Cliente: ${user.nome || 'N/A'}
+                    Cognome Cliente: ${user.cognome || 'N/A'}
+                    Indirizzo Cliente: ${user.indirizzo || 'N/A'}
+                  `;
+                  navigator.clipboard.writeText(textToCopy.trim());
+                  alert('Dettagli copiati negli appunti!');
+                };
 
-          <tbody>
-  {orders.map((order) => {
-    const { id, documentId, cod_ordine } = order;
-    
-    // Se esiste cod_ordine, estrai i campi
-    let codDocumento, dataOrdine, stato, prezzoTotale, userData;
-    if (cod_ordine) {
-      codDocumento = cod_ordine.documentId;
-      dataOrdine = cod_ordine.data ? new Date(cod_ordine.data).toLocaleString() : '—';
-      stato = cod_ordine.stato;
-      prezzoTotale = cod_ordine.prezzo_totale;
-      userData = cod_ordine.user || {};
-    }
-
-    return (
-      <tr key={id}>
-        <td>{codDocumento ?? '—'}</td>
-        <td>{dataOrdine ?? '—'}</td>
-        <td>{stato ?? '—'}</td>
-        <td>{prezzoTotale ?? '—'}</td>
-        <td>{userData?.nome ?? '—'}</td>
-        <td>{userData?.cognome ?? '—'}</td>
-        <td>{userData?.email ?? '—'}</td>
-        <td>
-          {!cod_ordine ? (
-            <>Nessun "cod_ordine" per questo record</>
-          ) : (
-            <>
-              <button onClick={() => navigator.clipboard.writeText(codDocumento)}>
-                Copia ordine
-              </button>
-              <button onClick={() => toggleProductsVisibility(codDocumento)}>
-                +
-              </button>
-            </>
-          )}
-        </td>
-      </tr>
-    );
-  })}
-</tbody>
-
-        </table>
-
-        {/* 
-          Nel tuo codice, mostri un blocco di dettagli (prodotti, indirizzo, etc.)
-          sotto ogni ordine. Ecco come potresti farlo, se la chiave è "cod_ordine.documentId".
-        */}
-        {orders.map((order) => {
-          // Attenzione: se cod_ordine non esiste, gestiscilo
-          const codDocumento = order.cod_ordine?.documentId;
-          const user = order.cod_ordine?.user || {};
-
-          return (
-            <div
-              key={`product-list-${codDocumento}`}
-              id={`product-list-${codDocumento}`}
-              style={{
-                display: 'none',
-                marginBottom: '20px',
-                padding: '10px',
-                border: '1px solid #ddd',
-              }}
-            >
-              <h4>Dettagli Cliente</h4>
-              <p>
-                <strong>Nome:</strong> {user.nome || 'N/A'} <br />
-                <strong>Cognome:</strong> {user.cognome || 'N/A'} <br />
-                <strong>Email:</strong> {user.email || 'N/A'} <br />
-                {/* Qui puoi mostrare altre info: user.indirizzo, ecc. */}
-              </p>
-
-              <h4>Dettagli Prodotti</h4>
-              <p>TODO: se hai la lista dei prodotti (es. order.cod_ordine.prodotti)</p>
-            </div>
-          );
-        })}
+                return (
+                  <React.Fragment key={ordine.id}>
+                    <tr>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        {ordine.documentId || 'N/A'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        {ordine.data ? new Date(ordine.data).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        {ordine.stato || 'N/A'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        {ordine.prezzo_totale ? `€${ordine.prezzo_totale.toFixed(2)}` : 'N/A'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        {user.email || 'N/A'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        <button
+                          onClick={() => toggleOrderDetails(ordine.documentId)}
+                          style={{
+                            padding: '5px 10px',
+                            backgroundColor: '#007bff',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {isOpen ? '▲ Nascondi' : '▼ Mostra'}
+                        </button>
+                        <button
+                          onClick={copyOrderDetails}
+                          style={{
+                            padding: '5px 10px',
+                            backgroundColor: '#28a745',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Copia Dati
+                        </button>
+                      </td>
+                    </tr>
+                    {isOpen && (
+                      <tr>
+                        <td colSpan="6" style={{ backgroundColor: '#f9f9f9', padding: '10px' }}>
+                          <div>
+                            <p>
+                              <strong>Nome:</strong> {user.nome || 'N/A'}
+                            </p>
+                            <p>
+                              <strong>Cognome:</strong> {user.cognome || 'N/A'}
+                            </p>
+                            <p>
+                              <strong>Indirizzo:</strong> {user.indirizzo || 'N/A'}
+                            </p>
+                            <p>
+                              <strong>Prodotto:</strong> {order.cod_prodotto?.nome_prodotto || 'N/A'}
+                            </p>
+                            <p>
+                              <strong>Prezzo Unitario:</strong>{' '}
+                              {order.cod_prodotto?.prezzo_unitario
+                                ? `€${order.cod_prodotto.prezzo_unitario.toFixed(2)}`
+                                : 'N/A'}
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <p>Nessun ordine trovato.</p>
+        )}
       </div>
     )}
   </>
@@ -1152,3 +1164,4 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
 };
 
 export default AdminPage;
+
