@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { Link } from 'react-router-dom';
 
 export const UserContainer = styled.div`
   display: flex;
@@ -185,4 +186,20 @@ export const OrderItem = styled.li`
 export const OrdersList = styled.ul`
   padding: 0;
   margin: 0;
+`;
+
+export const HomeLink = styled(Link)`
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 36px; /* Grandezza del testo */
+  font-weight: bold; /* Grassetto */
+  color:rgb(0, 0, 0); /* Colore verde */
+  text-decoration: none; /* Rimuove la sottolineatura */
+  font-family: 'Arial', sans-serif; /* Font moderno */
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline; /* Sottolineatura al passaggio del mouse */
+  }
 `;

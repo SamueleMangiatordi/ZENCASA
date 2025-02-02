@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { loadStripe } from '@stripe/stripe-js';
 
 import {
   CartContainer,
@@ -31,6 +32,9 @@ import {
 
 import { fetchProducts } from "../data/api";
 
+// Inizializza Stripe con la tua chiave pubblica
+const stripePromise = loadStripe('pk_test_51Qk6KcCOYow4mpBKhOXc4XlwerQUDyOr24T8J0BEav19jWSHHZ6QrAzL2I1gCxIsqsiDq5ms0g5LXcVIEz6ErJK300EuNrpmCI');
+
 const Cart = () => {
   const [products, setProducts] = useState([]);
   const [isCheckoutVisible, setIsCheckoutVisible] = useState(false);
@@ -38,7 +42,7 @@ const Cart = () => {
     const savedCart = localStorage.getItem("cart");
     return savedCart ? JSON.parse(savedCart) : [];
   });
-
+  
   const [formData, setFormData] = useState({
     name: "",
     surname: "",
@@ -46,13 +50,14 @@ const Cart = () => {
     postalCode: "",
     city: "",
   });
-
+  
   const SHIPPING_COST = 5.6;
   const FREE_SHIPPING_THRESHOLD = 50;
   const DISCOUNT_THRESHOLD = 100;
-
+  
   const navigate = useNavigate();
-
+  
+  // Recupera i prodotti
   useEffect(() => {
     const getProducts = async () => {
       try {
@@ -64,7 +69,8 @@ const Cart = () => {
     };
     getProducts();
   }, []);
-
+  
+  // Funzioni per aggiornare il carrello
   const increaseQuantity = (documentId) => {
     const updatedCart = cart.map((item) =>
       item.documentId === documentId
@@ -101,12 +107,14 @@ const Cart = () => {
     }));
   };
 
+  // Mostra il form di checkout
   const handleProceedToCheckout = () => {
     if (cart.length > 0) {
       setIsCheckoutVisible(true);
     }
   };
 
+  // Calcola totali
   const totalCost = cart.reduce((total, item) => {
     const product = products.find((prod) => prod.documentId === item.documentId);
     const price = product ? product.prezzo_unitario : 0;
@@ -115,6 +123,68 @@ const Cart = () => {
 
   const shippingCost = totalCost >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
   const discount = totalCost >= DISCOUNT_THRESHOLD ? totalCost * 0.1 : 0;
+
+  // Funzione di pagamento con Stripe
+  const handlePayment = async () => {
+    if (cart.length === 0) {
+      alert("Il carrello è vuoto. Aggiungi un prodotto per procedere.");
+      return;
+    }
+    if (!formData.name || !formData.surname || !formData.address1 || !formData.postalCode || !formData.city) {
+      alert("Per favore, compila tutti i campi di spedizione.");
+      return;
+    }
+    
+    const payload = {
+      cartItems: cart.map(item => {
+        const product = products.find(prod => prod.documentId === item.documentId);
+        return {
+          name: product ? product.nome_prodotto : "Prodotto sconosciuto",
+          unit_amount: product ? Math.round(product.prezzo_unitario * 100) : 0,
+          quantity: item.quantity,
+        };
+      }),
+      shippingCost: shippingCost,
+      discount: discount,
+    };
+
+    try {
+      const response = await fetch('http://localhost:4242/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        console.error("Errore nella risposta del backend", response);
+        alert("Errore nella creazione della sessione di pagamento. Controlla la console per maggiori dettagli.");
+        return;
+      }
+
+      const session = await response.json();
+      if (session.error) {
+        console.error("Errore nella sessione:", session.error);
+        alert("Si è verificato un errore durante la creazione della sessione di pagamento.");
+        return;
+      }
+
+      const stripe = await stripePromise;
+      const { error } = await stripe.redirectToCheckout({ sessionId: session.id });
+      if (error) {
+        console.error("Stripe error:", error);
+        alert(error.message);
+      }
+    } catch (error) {
+      console.error("Errore nel processo di pagamento:", error);
+      alert("Si è verificato un errore. Riprova.");
+    }
+  };
+
+  // 1) Funzione per gestire l'invio del form e bloccare il comportamento predefinito
+  const handleFormSubmit = (e) => {
+    e.preventDefault(); // Evita il refresh della pagina e la query string
+    handlePayment();    // Chiama la logica del pagamento
+  };
 
   return (
     <>
@@ -140,7 +210,6 @@ const Cart = () => {
   
       <CartContainer style={{ display: "flex", alignItems: "flex-start" }}>
         <div style={{ flex: 2, marginRight: "20px" }}>
-          {/* Aggiungi il pulsante "Torna indietro" */}
           {isCheckoutVisible && (
             <button
               onClick={() => setIsCheckoutVisible(false)}
@@ -159,7 +228,6 @@ const Cart = () => {
           )}
   
           {!isCheckoutVisible ? (
-            // Mostra il carrello
             <>
               <FreeShippingContainer style={{ marginBottom: "20px", width: "90%" }}>
                 <p style={{ textAlign: "center", marginBottom: "5px", fontSize: "1rem" }}>
@@ -173,10 +241,7 @@ const Cart = () => {
                   <ProgressBarInner
                     style={{
                       backgroundColor: "#FFA500",
-                      width: `${Math.min(
-                        (totalCost / FREE_SHIPPING_THRESHOLD) * 100,
-                        100
-                      )}%`,
+                      width: `${Math.min((totalCost / FREE_SHIPPING_THRESHOLD) * 100, 100)}%`,
                     }}
                   />
                 </ProgressBarOuter>
@@ -188,10 +253,27 @@ const Cart = () => {
   
               <ProductList>
                 {cart.map((item) => {
-                  const product = products.find(
-                    (prod) => prod.documentId === item.documentId
-                  );
-                  if (!product) return null;
+                  const product = products.find((prod) => prod.documentId === item.documentId);
+                  if (!product) {
+                    return (
+                      <ProductCard key={item.documentId}>
+                        <p>Prodotto non trovato. Forse è stato rimosso.</p>
+                        <button
+                          onClick={() => removeFromCart(item.documentId)}
+                          style={{
+                            backgroundColor: "red",
+                            color: "white",
+                            border: "none",
+                            padding: "10px 15px",
+                            borderRadius: "5px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Rimuovi
+                        </button>
+                      </ProductCard>
+                    );
+                  }
   
                   return (
                     <ProductCard key={item.documentId} style={{ display: "flex" }}>
@@ -271,8 +353,8 @@ const Cart = () => {
               </ProductList>
             </>
           ) : (
-            // Mostra i dettagli di spedizione
-            <CheckoutForm>
+            // 2) Usiamo <CheckoutForm> come un <form> e gestiamo onSubmit
+            <CheckoutForm onSubmit={handleFormSubmit}>
               <h2>Inserisci i dettagli di spedizione</h2>
               <FormField>
                 <label>Nome:</label>
@@ -329,14 +411,17 @@ const Cart = () => {
                   required
                 />
               </FormField>
+
+              {/* 3) Il pulsante è di tipo submit, quindi invoca onSubmit del form */}
               <ProceedButton
-                onClick={() => {
-                  console.log("Dati di spedizione:", formData);
-                  alert("Ordine completato con successo!");
-                  setIsCheckoutVisible(false);
+                type="submit"
+                disabled={cart.length === 0}
+                style={{
+                  backgroundColor: cart.length === 0 ? "gray" : "#007BFF",
+                  cursor: cart.length === 0 ? "not-allowed" : "pointer",
                 }}
               >
-                Completa Ordine
+                Procedi al pagamento
               </ProceedButton>
             </CheckoutForm>
           )}
@@ -349,9 +434,7 @@ const Cart = () => {
           </SummaryItem>
           <SummaryItem>
             <span>Spedizione</span>{" "}
-            <span>
-              {shippingCost > 0 ? `€${shippingCost.toFixed(2)}` : "Gratuita 🎉"}
-            </span>
+            <span>{shippingCost > 0 ? `€${shippingCost.toFixed(2)}` : "Gratuita 🎉"}</span>
           </SummaryItem>
           <SummaryItem>
             <span>Sconto</span>{" "}
@@ -361,17 +444,23 @@ const Cart = () => {
             <span>Totale</span>{" "}
             <span>€{(totalCost + shippingCost - discount).toFixed(2)}</span>
           </TotalPrice>
-          <CheckoutButton
-            onClick={handleProceedToCheckout}
-            disabled={cart.length === 0}
-          >
-            Inserisci dettagli spedizione
-          </CheckoutButton>
+          
+          {totalCost > 0 && (
+            <CheckoutButton
+              onClick={handleProceedToCheckout}
+              disabled={cart.length === 0}
+              style={{
+                backgroundColor: cart.length === 0 ? "gray" : "#007BFF",
+                cursor: cart.length === 0 ? "not-allowed" : "pointer",
+              }}
+            >
+              Inserisci dettagli spedizione
+            </CheckoutButton>
+          )}
         </SummarySection>
       </CartContainer>
     </>
   );
-  
 };
 
 export default Cart;

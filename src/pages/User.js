@@ -5,7 +5,6 @@ import {API_URL} from '../data/api';
 import {
   UserContainer,
   UserTitle,
-
   UserInfo,
   UserLabel,
   ErrorMessage,
@@ -20,6 +19,7 @@ import {
   OrdersContainer,
   OrdersList,
   OrderItem,
+  HomeLink,
 } from '../styles/StyledUser';
 
 const User = () => {
@@ -66,26 +66,6 @@ const User = () => {
             cap: meData.cap,
           });
           setLoading(false);
-  
-          /*if (!meData?.id) {
-            throw new Error("Impossibile recuperare l'ID utente");
-          }
-  
-          // Recupera i dettagli completi dell'utente usando il suo ID
-          const userRes = await fetch(`${API_URL}/users/${meData.id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-  
-          if (!userRes.ok) {
-            throw new Error('Errore durante il recupero dei dati utente');
-          }
-  
-          const user = await userRes.json();
-          setUserData(user);
-          setEditData(user);
-          setLoading(false);*/
 
           const ordersRes = await fetch(
             `${API_URL}/ordine-prodottos?filters[cod_ordine][user][id][$eq]=${meData.id}` +
@@ -115,6 +95,7 @@ const User = () => {
             prodotto: {
               id: item.cod_prodotto.id,
               nome: item.cod_prodotto.nome_prodotto,
+              prezzo_unitario: item.cod_prodotto.prezzo_unitario,
             },
           };
         });
@@ -212,6 +193,7 @@ const User = () => {
 
   return (
     <UserContainer>
+      <HomeLink to="/">Zencasa</HomeLink>
       <UserTitle>Benvenuto, {userData?.username || 'Utente'}!</UserTitle>
       <SectionTabs>
         <TabButton $active={activeTab === 'profile'} onClick={() => setActiveTab('profile')}>
@@ -291,6 +273,7 @@ const User = () => {
                     <div style={{ marginLeft: '20px' }}>
                       <p>Stato: {order.stato}</p>
                       <p>Prezzo Totale: €{order.prezzo_totale.toFixed(2)}</p>
+                      <p>Prezzo Unitario: €{order.prodotto.prezzo_unitario}</p>
                       <p>Data: {new Date(order.data).toLocaleDateString()}</p>
                       <p><strong>Prodotto:</strong> {order.prodotto.nome}</p>
                     </div>
