@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { loadStripe } from '@stripe/stripe-js';
+import { useNavigate, useLocation } from "react-router-dom"; // Aggiunto useLocation
+import { loadStripe } from "@stripe/stripe-js";
 
 import {
   CartContainer,
@@ -33,7 +33,9 @@ import {
 import { fetchProducts } from "../data/api";
 
 // Inizializza Stripe con la tua chiave pubblica
-const stripePromise = loadStripe('pk_test_51Qk6KcCOYow4mpBKhOXc4XlwerQUDyOr24T8J0BEav19jWSHHZ6QrAzL2I1gCxIsqsiDq5ms0g5LXcVIEz6ErJK300EuNrpmCI');
+const stripePromise = loadStripe(
+  "pk_test_51Qk6KcCOYow4mpBKhOXc4XlwerQUDyOr24T8J0BEav19jWSHHZ6QrAzL2I1gCxIsqsiDq5ms0g5LXcVIEz6ErJK300EuNrpmCI"
+);
 
 const Cart = () => {
   const [products, setProducts] = useState([]);
@@ -42,7 +44,6 @@ const Cart = () => {
     const savedCart = localStorage.getItem("cart");
     return savedCart ? JSON.parse(savedCart) : [];
   });
-  
   const [formData, setFormData] = useState({
     name: "",
     surname: "",
@@ -50,13 +51,30 @@ const Cart = () => {
     postalCode: "",
     city: "",
   });
-  
+
+  // A) Stato per rilevare il pagamento andato a buon fine
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  // Soglie e costi
   const SHIPPING_COST = 5.6;
   const FREE_SHIPPING_THRESHOLD = 50;
   const DISCOUNT_THRESHOLD = 100;
-  
+
   const navigate = useNavigate();
-  
+  const location = useLocation(); // Per leggere la query string (es. ?success=true)
+
+  // B) Controllo se nella query string è presente "success=true"
+  //    Se sì, svuoto il carrello e mostro il messaggio di ordine completato
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get("success") === "true") {
+      setPaymentSuccess(true);
+      // Svuota il carrello
+      localStorage.removeItem("cart");
+      setCart([]);
+    }
+  }, [location.search]);
+
   // Recupera i prodotti
   useEffect(() => {
     const getProducts = async () => {
@@ -69,7 +87,7 @@ const Cart = () => {
     };
     getProducts();
   }, []);
-  
+
   // Funzioni per aggiornare il carrello
   const increaseQuantity = (documentId) => {
     const updatedCart = cart.map((item) =>
@@ -130,14 +148,22 @@ const Cart = () => {
       alert("Il carrello è vuoto. Aggiungi un prodotto per procedere.");
       return;
     }
-    if (!formData.name || !formData.surname || !formData.address1 || !formData.postalCode || !formData.city) {
+    if (
+      !formData.name ||
+      !formData.surname ||
+      !formData.address1 ||
+      !formData.postalCode ||
+      !formData.city
+    ) {
       alert("Per favore, compila tutti i campi di spedizione.");
       return;
     }
-    
+
     const payload = {
-      cartItems: cart.map(item => {
-        const product = products.find(prod => prod.documentId === item.documentId);
+      cartItems: cart.map((item) => {
+        const product = products.find(
+          (prod) => prod.documentId === item.documentId
+        );
         return {
           name: product ? product.nome_prodotto : "Prodotto sconosciuto",
           unit_amount: product ? Math.round(product.prezzo_unitario * 100) : 0,
@@ -146,25 +172,34 @@ const Cart = () => {
       }),
       shippingCost: shippingCost,
       discount: discount,
+      // IMPORTANTE:
+      // Assicurati di impostare correttamente successUrl e cancelUrl
+      // nel tuo backend node (create-checkout-session). Ad esempio:
+      // successUrl: "http://localhost:3000/cart?success=true",
+      // cancelUrl: "http://localhost:3000/cart"
     };
 
     try {
-      const response = await fetch('http://localhost:4242/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("http://localhost:4242/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         console.error("Errore nella risposta del backend", response);
-        alert("Errore nella creazione della sessione di pagamento. Controlla la console per maggiori dettagli.");
+        alert(
+          "Errore nella creazione della sessione di pagamento. Controlla la console per maggiori dettagli."
+        );
         return;
       }
 
       const session = await response.json();
       if (session.error) {
         console.error("Errore nella sessione:", session.error);
-        alert("Si è verificato un errore durante la creazione della sessione di pagamento.");
+        alert(
+          "Si è verificato un errore durante la creazione della sessione di pagamento."
+        );
         return;
       }
 
@@ -182,10 +217,47 @@ const Cart = () => {
 
   // 1) Funzione per gestire l'invio del form e bloccare il comportamento predefinito
   const handleFormSubmit = (e) => {
-    e.preventDefault(); // Evita il refresh della pagina e la query string
-    handlePayment();    // Chiama la logica del pagamento
+    e.preventDefault(); // Evita il refresh della pagina
+    handlePayment(); // Chiama la logica del pagamento
   };
 
+  // C) Se il pagamento è avvenuto con successo, mostro un messaggio di conferma
+  if (paymentSuccess) {
+    return (
+      <>
+        <Banner>Spedizione gratuita per ordini superiori a 50 euro</Banner>
+        <Header>
+          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+            <Title>Zencasa</Title>
+            <nav style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+              <StyledButton to="/">HOME</StyledButton>
+              <StyledButton to="/products">CATALOGO</StyledButton>
+              <StyledButton
+                as="a"
+                href="https://wa.me/393883816904"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                CONTATTI
+              </StyledButton>
+            </nav>
+          </div>
+          <StyledButton to="/profile">👤 Profilo</StyledButton>
+        </Header>
+
+        <div style={{ margin: "50px", textAlign: "center" }}>
+          <h2>Grazie per l'acquisto!</h2>
+          <p>Il tuo ordine è stato completato con successo. Riceverai presto un'email di conferma.</p>
+          <p>
+            Puoi tornare alla <StyledButton to="/">Home</StyledButton> o
+            visitare il <StyledButton to="/products">Catalogo</StyledButton> per continuare lo shopping.
+          </p>
+        </div>
+      </>
+    );
+  }
+
+  // D) Altrimenti, mostra il carrello normale o il form di checkout
   return (
     <>
       <Banner>Spedizione gratuita per ordini superiori a 50 euro</Banner>
@@ -205,9 +277,9 @@ const Cart = () => {
             </StyledButton>
           </nav>
         </div>
-        <StyledButton to="/user">👤 Profilo</StyledButton>
+        <StyledButton to="/profile">👤 Profilo</StyledButton>
       </Header>
-  
+
       <CartContainer style={{ display: "flex", alignItems: "flex-start" }}>
         <div style={{ flex: 2, marginRight: "20px" }}>
           {isCheckoutVisible && (
@@ -226,22 +298,33 @@ const Cart = () => {
               Torna al Carrello
             </button>
           )}
-  
+
           {!isCheckoutVisible ? (
             <>
               <FreeShippingContainer style={{ marginBottom: "20px", width: "90%" }}>
-                <p style={{ textAlign: "center", marginBottom: "5px", fontSize: "1rem" }}>
+                <p
+                  style={{
+                    textAlign: "center",
+                    marginBottom: "5px",
+                    fontSize: "1rem",
+                  }}
+                >
                   {totalCost >= FREE_SHIPPING_THRESHOLD
                     ? totalCost >= DISCOUNT_THRESHOLD
                       ? "Complimenti! Spedizione gratuita e sconto 10% applicato 🎉"
                       : "Complimenti! La spedizione è gratuita 🎉"
-                    : `Mancano €${(FREE_SHIPPING_THRESHOLD - totalCost).toFixed(2)} per la spedizione gratuita!`}
+                    : `Mancano €${(FREE_SHIPPING_THRESHOLD - totalCost).toFixed(
+                        2
+                      )} per la spedizione gratuita!`}
                 </p>
                 <ProgressBarOuter style={{ height: "6px" }}>
                   <ProgressBarInner
                     style={{
                       backgroundColor: "#FFA500",
-                      width: `${Math.min((totalCost / FREE_SHIPPING_THRESHOLD) * 100, 100)}%`,
+                      width: `${Math.min(
+                        (totalCost / FREE_SHIPPING_THRESHOLD) * 100,
+                        100
+                      )}%`,
                     }}
                   />
                 </ProgressBarOuter>
@@ -250,10 +333,12 @@ const Cart = () => {
                   <HighlightText>Sconto 10% (oltre 100€)</HighlightText>
                 </ProgressLabels>
               </FreeShippingContainer>
-  
+
               <ProductList>
                 {cart.map((item) => {
-                  const product = products.find((prod) => prod.documentId === item.documentId);
+                  const product = products.find(
+                    (prod) => prod.documentId === item.documentId
+                  );
                   if (!product) {
                     return (
                       <ProductCard key={item.documentId}>
@@ -274,7 +359,7 @@ const Cart = () => {
                       </ProductCard>
                     );
                   }
-  
+
                   return (
                     <ProductCard key={item.documentId} style={{ display: "flex" }}>
                       <div style={{ flex: 3 }}>
@@ -353,7 +438,7 @@ const Cart = () => {
               </ProductList>
             </>
           ) : (
-            // 2) Usiamo <CheckoutForm> come un <form> e gestiamo onSubmit
+            // 2) Usiamo <CheckoutForm> come <form> e gestiamo onSubmit
             <CheckoutForm onSubmit={handleFormSubmit}>
               <h2>Inserisci i dettagli di spedizione</h2>
               <FormField>
@@ -412,7 +497,6 @@ const Cart = () => {
                 />
               </FormField>
 
-              {/* 3) Il pulsante è di tipo submit, quindi invoca onSubmit del form */}
               <ProceedButton
                 type="submit"
                 disabled={cart.length === 0}
@@ -426,7 +510,7 @@ const Cart = () => {
             </CheckoutForm>
           )}
         </div>
-  
+
         <SummarySection>
           <h2>Riepilogo dell'ordine</h2>
           <SummaryItem>
@@ -434,7 +518,9 @@ const Cart = () => {
           </SummaryItem>
           <SummaryItem>
             <span>Spedizione</span>{" "}
-            <span>{shippingCost > 0 ? `€${shippingCost.toFixed(2)}` : "Gratuita 🎉"}</span>
+            <span>
+              {shippingCost > 0 ? `€${shippingCost.toFixed(2)}` : "Gratuita 🎉"}
+            </span>
           </SummaryItem>
           <SummaryItem>
             <span>Sconto</span>{" "}
@@ -444,7 +530,7 @@ const Cart = () => {
             <span>Totale</span>{" "}
             <span>€{(totalCost + shippingCost - discount).toFixed(2)}</span>
           </TotalPrice>
-          
+
           {totalCost > 0 && (
             <CheckoutButton
               onClick={handleProceedToCheckout}
