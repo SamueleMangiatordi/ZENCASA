@@ -51,10 +51,14 @@ import {
   ContactInfo2,
   WhatsAppButton
 } from "../styles/StyledComponents";
+import { useAuth } from '../data/authContext';
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
 
   const [email, setEmail] = useState('');
+  const { isAuthenticated, role } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -172,10 +176,42 @@ const Home = () => {
 
   {/* Right Section: Login and Cart Icons */}
   <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-    <StyledButton to="/login" style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+    <StyledButton onClick={() => {
+      
+      console.log('Button clicked');
+
+      if (isAuthenticated) {
+        if (role === 'Admin') {
+          console.log("Utente è un admin, reindirizzamento a /admin");
+          setTimeout(() => navigate("/admin"), 0); // Reindirizza alla pagina admin
+        } else {
+          console.log("Utente non è admin, reindirizzamento a /user");
+          setTimeout(() => navigate("/user"), 0); // Reindirizza alla pagina user
+        }
+      } else {
+        console.log("Utente non autenticato, reindirizzamento a /login");
+        setTimeout(() => navigate("/login"), 0); // Vai alla pagina di login
+      }
+    }}
+    style={{ display: "flex", alignItems: "center", gap: "5px" }}
+    >
       <Icon>👤</Icon>
     </StyledButton>
-    <StyledButton to="/cart" style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+    <StyledButton onClick={() => {
+      
+      console.log('Button clicked');
+
+      if (isAuthenticated) {
+        console.log("Utente autenticato, reindirizzamento a /cart");
+        setTimeout(() => navigate("/cart"), 0); // Timeout per garantire che il reindirizzamento venga eseguito
+      } else {
+        console.log("Utente non autenticato, reindirizzamento a /login");
+        setTimeout(() => navigate("/login"), 0); // Vai alla pagina di login
+      }
+    }}
+    style={{ display: "flex", alignItems: "center", gap: "5px" }}
+   >
+      
       <Icon>🛍️</Icon>
     </StyledButton>
   </div>

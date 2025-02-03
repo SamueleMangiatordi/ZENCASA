@@ -41,15 +41,23 @@ import {
   Icon,
 } from '../styles/StyledComponents';
 
-import { StyledLink } from '../styles/StyledCatalog'; // Link personalizzato
+//import { StyledLink } from '../styles/StyledCatalog'; // Link personalizzato
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../data/authContext';
+
 
 const AdminPage = () => {
   const [activeSection, setActiveSection] = useState('statistiche');
+  //const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState(() => {
-    const savedSuppliers = localStorage.getItem('suppliers');
-    
-    return savedSuppliers ? JSON.parse(savedSuppliers) : [];
+  const savedSuppliers = localStorage.getItem('suppliers');
+
+  return savedSuppliers ? JSON.parse(savedSuppliers) : [];
   });
+
+  
+
   
   const [showForm, setShowForm] = useState(false); // Per mostrare/nascondere il form
   const [newSupplier, setNewSupplier] = useState({
@@ -155,6 +163,9 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
   // USEEFFECT
   // ----------------------------
   useEffect(() => {
+    // Se il token non è quello dell'admin, reindirizza alla home
+   
+    
     // Fetch ordini
     const fetchOrders = async () => {
       try {
@@ -256,7 +267,7 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
   
     fetchOrders();
     fetchUsers();
-  }, []);
+  }, []); //il reinderizzamento dipende dal valore di token
   
 
   // ----------------------------
@@ -292,6 +303,7 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
   };
   
   const saveProduct = async () => {
+    console.log(localStorage.getItem('jwt'));
     if (!editingName || !editingPrice) {
       alert('Nome e Prezzo sono obbligatori!');
       return;
@@ -304,6 +316,12 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
           prezzo_unitario: parseFloat(editingPrice),
           descrizione: editingDescription,
           quantita_disponibili: parseInt(editingQuantity, 10),
+        },
+      },
+      {
+        
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jwt')}`, // Assicurati che il token sia presente
         },
       });
   
@@ -1156,7 +1174,6 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
 )}
 
 
-
         </DashboardSection>
       </AdminContainer>
     </>
@@ -1164,4 +1181,3 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
 };
 
 export default AdminPage;
-

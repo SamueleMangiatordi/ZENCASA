@@ -82,3 +82,10 @@ export const RegistrationLink = styled.p`
     text-decoration: underline;
   }
 `;
+
+export const Loader = styled.div`
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 14px;
+  text-align: center;
+`;

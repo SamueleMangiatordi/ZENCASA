@@ -205,7 +205,7 @@ const Cart = () => {
             </StyledButton>
           </nav>
         </div>
-        <StyledButton to="/profile">👤 Profilo</StyledButton>
+        <StyledButton to="/user">👤 Profilo</StyledButton>
       </Header>
   
       <CartContainer style={{ display: "flex", alignItems: "flex-start" }}>
