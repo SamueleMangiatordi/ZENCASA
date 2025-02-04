@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../data/authContext';
 import axios from 'axios';
 import {
-
+  API_URL,
   PRODUCTS_URL,
   USERS_URL,
 } from '../data/api';
@@ -35,24 +37,29 @@ import {
 import { StyledLink } from '../styles/StyledCatalog'; // Link personalizzato
 
 const ServicePage = () => {
-    const [activeSection, setActiveSection] = useState(() => {
-        return localStorage.getItem("activeSection") || "caseAperti";
-      });
+  
+  const {logout} = useAuth();
+  const navigate = useNavigate();
+    
+  const [activeSection, setActiveSection] = useState(() => {
+    return localStorage.getItem("activeSection") || "caseAperti";
+  });
 
-      const handleSetActiveSection = (section) => {
-        setActiveSection(section);
-        localStorage.setItem('activeSection', section);
-      };
+  const handleSetActiveSection = (section) => {
+    setActiveSection(section);
+    localStorage.setItem('activeSection', section);
+  };
       
       
+  const [openOrderDocumentIds, setOpenOrderDocumentIds] = useState([]); // Traccia i documentId aperti
       
-      const [suppliers, setSuppliers] = useState(() => {
-        const savedSuppliers = localStorage.getItem('suppliers');
-        return savedSuppliers ? JSON.parse(savedSuppliers) : [];
-      });
+  const [suppliers, setSuppliers] = useState(() => {
+    const savedSuppliers = localStorage.getItem('suppliers');
+    return savedSuppliers ? JSON.parse(savedSuppliers) : [];
+  });
       
-      const [supplierToDelete, setSupplierToDelete] = useState('');
-      const [showDeleteForm, setShowDeleteForm] = useState(false);
+  const [supplierToDelete, setSupplierToDelete] = useState('');
+  const [showDeleteForm, setShowDeleteForm] = useState(false);
       
   
   const [showForm, setShowForm] = useState(false); // Per mostrare/nascondere il form
@@ -68,43 +75,57 @@ const ServicePage = () => {
     return savedTickets ? JSON.parse(savedTickets) : [];
   });
 
-const [newTicket, setNewTicket] = useState({
-  cliente: "",
-  email: "",
-  descrizione: "",
-  stato: "Aperto",
-});
+  const [newTicket, setNewTicket] = useState({
+    cliente: "",
+    email: "",
+    descrizione: "",
+    stato: "Aperto",
+  });
 
-// Sincronizza automaticamente i ticket con localStorage ogni volta che cambiano
-useEffect(() => {
-  localStorage.setItem('tickets', JSON.stringify(tickets));
-}, [tickets]);
+  // Logout
+  const handleLogout = () => {
+    logout();
+    setTimeout(() => navigate('/', { replace: true }), 100); // Aggiunge un leggero ritardo
+  };
 
-// Funzione per aggiungere un nuovo ticket
-const handleAddTicket = (e) => {
-  e.preventDefault();
-  if (!newTicket.cliente || !newTicket.email || !newTicket.descrizione) {
-    alert("Tutti i campi sono obbligatori!");
-    return;
-  }
-  const updatedTickets = [...tickets, { ...newTicket, id: Date.now() }];
-  setTickets(updatedTickets); // Aggiorna lo stato
-  setNewTicket({ cliente: "", email: "", descrizione: "", stato: "Aperto" }); // Resetta il form
-};
+  // Sincronizza automaticamente i ticket con localStorage ogni volta che cambiano
+  useEffect(() => {
+    localStorage.setItem('tickets', JSON.stringify(tickets));
+  }, [tickets]);
 
-// Funzione per eliminare un ticket
-const handleDeleteTicket = (id) => {
-  const updatedTickets = tickets.filter((ticket) => ticket.id !== id);
-  setTickets(updatedTickets); // Aggiorna lo stato
-};
+  // Funzione per aggiungere un nuovo ticket
+  const handleAddTicket = (e) => {
+    e.preventDefault();
+    if (!newTicket.cliente || !newTicket.email || !newTicket.descrizione) {
+      alert("Tutti i campi sono obbligatori!");
+      return;
+    }
+    const updatedTickets = [...tickets, { ...newTicket, id: Date.now() }];
+    setTickets(updatedTickets); // Aggiorna lo stato
+    setNewTicket({ cliente: "", email: "", descrizione: "", stato: "Aperto" }); // Resetta il form
+  };
 
-// Funzione per cambiare lo stato di un ticket
-const handleChangeTicketStatus = (id, newStatus) => {
-  const updatedTickets = tickets.map((ticket) =>
-    ticket.id === id ? { ...ticket, stato: newStatus } : ticket
-  );
-  setTickets(updatedTickets); // Aggiorna lo stato
-};
+  // Funzione per eliminare un ticket
+  const handleDeleteTicket = (id) => {
+    const updatedTickets = tickets.filter((ticket) => ticket.id !== id);
+    setTickets(updatedTickets); // Aggiorna lo stato
+  };
+
+  // Funzione per cambiare lo stato di un ticket
+  const handleChangeTicketStatus = (id, newStatus) => {
+    const updatedTickets = tickets.map((ticket) =>
+      ticket.id === id ? { ...ticket, stato: newStatus } : ticket
+    );
+    setTickets(updatedTickets); // Aggiorna lo stato
+  };
+
+  const toggleOrderDetails = (documentId) => {
+    setOpenOrderDocumentIds((prevState) =>
+      prevState.includes(documentId)
+        ? prevState.filter((id) => id !== documentId) // Rimuovi il documentId per chiudere
+        : [...prevState, documentId] // Aggiungi il documentId per aprire
+    );
+  };
 
   
   
@@ -184,9 +205,11 @@ const handleChangeTicketStatus = (id, newStatus) => {
   // ----------------------------
   useEffect(() => {
     // Fetch ordini
+    // Fetch ordini
     const fetchOrders = async () => {
       try {
-        const response = await axios.get('http://localhost:1337/api/ordinis?populate=*');
+
+        const response = await axios.get(`${API_URL}/ordine-prodottos?populate[cod_ordine][populate]=user&populate=cod_prodotto`);
         const allOrders = response.data.data || [];
     
         // Recupera i dettagli dei clienti usando `documentId`
@@ -194,7 +217,7 @@ const handleChangeTicketStatus = (id, newStatus) => {
           const customerDocumentId = order.user?.documentId;
           if (customerDocumentId) {
             try {
-              const customerResponse = await axios.get(`http://localhost:1337/api/users/${customerDocumentId}`);
+              const customerResponse = await axios.get(`${API_URL}/users/${customerDocumentId}`);
               return { [customerDocumentId]: customerResponse.data };
             } catch (err) {
               console.error(`Errore nel recupero dei dettagli del cliente con documentId ${customerDocumentId}:`, err);
@@ -214,6 +237,7 @@ const handleChangeTicketStatus = (id, newStatus) => {
         });
     
         setOrders(allOrders); // Salva gli ordini nello stato
+        setCustomers(customersData); // Salva i dati dei clienti nello stato
         setOrdersCount(allOrders.length);
       } catch (err) {
         console.error('Errore nel recupero degli ordini:', err);
@@ -371,7 +395,10 @@ const handleChangeTicketStatus = (id, newStatus) => {
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <StyledButton to="/">HOME</StyledButton>
+        <StyledButton to="/">HOME</StyledButton>
+        <StyledButton onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '20px'}}>
+          LOGOUT
+        </StyledButton>
         </div>
       </Header>
 
@@ -718,79 +745,129 @@ const handleChangeTicketStatus = (id, newStatus) => {
       <p style={{ color: 'red' }}>{orderError}</p>
     ) : (
       <div style={{ marginTop: '20px' }}>
-        <table
-          style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            backgroundColor: '#fff',
-            marginBottom: '20px',
-          }}
-        >
-          <thead>
-            <tr style={{ backgroundColor: '#f5f5f5', textAlign: 'left' }}>
-              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                Document ID
-              </th>
-              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                Nome
-              </th>
-              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                Cognome
-              </th>
-              <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                Azioni
-              </th>
-            </tr>
-          </thead>
-        
-
-          <tbody>
-  {orders.map((order) => {
-    const customer = customers[order.user?.documentId] || {};
-    return (
-      <tr key={order.documentId}>
-        <td>{customer.nome || 'N/A'}</td>
-        <td>{customer.cognome || 'N/A'}</td>
-        <td>{customer.email || 'N/A'}</td>
-        <td>
-          <button
-            onClick={() => navigator.clipboard.writeText(order.documentId)}
+        {orders.length > 0 ? (
+          <table
             style={{
-              padding: '5px 10px',
-              backgroundColor: '#007bff',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
+              width: '100%',
+              borderCollapse: 'collapse',
+              backgroundColor: '#fff',
+              marginBottom: '20px',
             }}
           >
-            Copia ordine
-          </button>
-        </td>
-        <td>
-          <button
-            onClick={() => toggleProductsVisibility(order.documentId)}
-            style={{
-              padding: '5px 10px',
-              backgroundColor: '#007bff',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            +
-          </button>
-        </td>
-      </tr>
-    );
-  })}
-</tbody>
+            <thead>
+              <tr style={{ backgroundColor: '#f5f5f5', textAlign: 'left' }}>
+                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Ordine ID</th>
+                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Data</th>
+                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Stato</th>
+                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Prezzo Totale</th>
+                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Cliente</th>
+                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Azioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => {
+                const ordine = order.cod_ordine || {};
+                const user = ordine.user || {};
+                const prodotto = order.cod_prodotto || {};
+                const isOpen = openOrderDocumentIds.includes(ordine.documentId); // Controlla se il gruppo è aperto
+                // Funzione per copiare i dati negli appunti
+                const copyOrderDetails = () => {
+                  const textToCopy = `
+                    Document ID: ${ordine.documentId || 'N/A'}
+                    Nome Prodotto: ${prodotto.nome_prodotto || 'N/A'}
+                    Nome Cliente: ${user.nome || 'N/A'}
+                    Cognome Cliente: ${user.cognome || 'N/A'}
+                    Indirizzo Cliente: ${user.indirizzo || 'N/A'}
+                  `;
+                  navigator.clipboard.writeText(textToCopy.trim());
+                  alert('Dettagli copiati negli appunti!');
+                };
 
-
-
-
-        </table>
+                return (
+                  <React.Fragment key={ordine.id}>
+                    <tr>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        {ordine.documentId || 'N/A'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        {ordine.data ? new Date(ordine.data).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        {ordine.stato || 'N/A'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        {ordine.prezzo_totale ? `€${ordine.prezzo_totale.toFixed(2)}` : 'N/A'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        {user.email || 'N/A'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                        <button
+                          onClick={() => toggleOrderDetails(ordine.documentId)}
+                          style={{
+                            padding: '5px 10px',
+                            backgroundColor: '#007bff',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {isOpen ? '▲ Nascondi' : '▼ Mostra'}
+                        </button>
+                        <button
+                          onClick={copyOrderDetails}
+                          style={{
+                            padding: '5px 10px',
+                            backgroundColor: '#28a745',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Copia Dati
+                        </button>
+                      </td>
+                    </tr>
+                    {isOpen && (
+                      <tr>
+                        <td colSpan="6" style={{ backgroundColor: '#f9f9f9', padding: '10px' }}>
+                          <div>
+                            <p>
+                              <strong>Nome:</strong> {user.nome || 'N/A'}
+                            </p>
+                            <p>
+                              <strong>Cognome:</strong> {user.cognome || 'N/A'}
+                            </p>
+                            <p>
+                              <strong>Indirizzo:</strong> {user.indirizzo || 'N/A'}
+                            </p>
+                            <p>
+                              <strong>Prodotto:</strong> {order.cod_prodotto?.nome_prodotto || 'N/A'}
+                            </p>
+                            <p>
+                              <strong>Prezzo Unitario:</strong>{' '}
+                              {order.cod_prodotto?.prezzo_unitario
+                                ? `€${order.cod_prodotto.prezzo_unitario.toFixed(2)}`
+                                : 'N/A'}
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <p>Nessun ordine trovato.</p>
+        )}
+      </div>
+    )}
+  </>
+)}
 
         {/* Dettagli dei prodotti per un ordine */}
         {orders.map((order) => (
@@ -829,10 +906,7 @@ const handleChangeTicketStatus = (id, newStatus) => {
 </div>
 
         ))}
-      </div>
-    )}
-  </>
-)}
+
 
         </DashboardSection>
       </AdminContainer>

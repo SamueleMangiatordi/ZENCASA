@@ -48,19 +48,22 @@ import { useAuth } from '../data/authContext';
 
 const AdminPage = () => {
   
-  const [showAddProductForm, setShowAddProductForm] = useState(false);
+const [showAddProductForm, setShowAddProductForm] = useState(false);
 const [newProductName, setNewProductName] = useState('');
 const [newProductPrice, setNewProductPrice] = useState('');
 const [newProductDescription, setNewProductDescription] = useState('');
 const [newProductQuantity, setNewProductQuantity] = useState('');
-  const [activeSection, setActiveSection] = useState('statistiche');
-  //const { isAdmin } = useAuth();
-  const navigate = useNavigate();
-  const [suppliers, setSuppliers] = useState(() => {
+const [activeSection, setActiveSection] = useState('statistiche');
+//const { isAdmin } = useAuth();
+const navigate = useNavigate();
+const [suppliers, setSuppliers] = useState(() => {
   const savedSuppliers = localStorage.getItem('suppliers');
 
   return savedSuppliers ? JSON.parse(savedSuppliers) : [];
-  });
+});
+
+const {logout} = useAuth();
+
 
   
 
@@ -92,6 +95,13 @@ const [newProductQuantity, setNewProductQuantity] = useState('');
     setNewSupplier({ name: '', link: '', logo: '' }); // Resetta i campi del form
     setShowForm(false); // Nasconde il form
   };
+
+  // Logout
+  const handleLogout = () => {
+    logout();
+    setTimeout(() => navigate('/', { replace: true }), 100); // Aggiunge un leggero ritardo
+  };
+
 
   const handleDeleteSupplier = (e) => {
     e.preventDefault();
@@ -496,6 +506,9 @@ const handleDeleteProduct = async (documentId) => {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <StyledButton to="/">HOME</StyledButton>
+          <StyledButton onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '20px'}}>
+            LOGOUT
+          </StyledButton>
         </div>
       </Header>
 
