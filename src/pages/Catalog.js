@@ -35,6 +35,13 @@ const ProductsCatalog = () => {
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
+const [selectedProduct, setSelectedProduct] = useState(null);
+
+const handleProductClick = (product) => {
+  setSelectedProduct(product);
+};
+
+
   const navigate = useNavigate(); // Per navigare tra le pagine
 
   // Recupera i prodotti da Strapi
@@ -154,28 +161,99 @@ const ProductsCatalog = () => {
         </div>
       </Header>
 
-      {/* Catalogo */}
+
       <CatalogContainer>
+        {/* Catalogo */}
+        {selectedProduct ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              padding: '20px',
+              border: '1px solid #ddd',
+              marginBottom: '20px',
+              borderRadius: '5px',
+              maxWidth: '800px',
+              margin: 'auto',
+            }}
+          >
+            {/* Nome del prodotto */}
+            <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>{selectedProduct.name}</h2>
+            
+            {/* Contenitore immagine e descrizione */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '20px',
+                alignItems: 'flex-start',
+                justifyContent: 'center',
+                width: '100%',
+              }}
+            >
+              {/* Immagine del prodotto */}
+              <img
+                src={`http://localhost:1337${selectedProduct.image}`}
+                alt={selectedProduct.name}
+                style={{
+                  width: '300px',
+                  borderRadius: '5px',
+                  objectFit: 'cover',
+                }}
+              />
+
+              {/* Descrizione e prezzo */}
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: '16px', lineHeight: '1.5', textAlign: 'justify' }}>
+                  {selectedProduct.description}
+                </p>
+                <h3 style={{ marginTop: '20px', fontSize: '20px', color: '#555' }}>
+                  Prezzo: €{selectedProduct.price.toFixed(2)}
+                </h3>
+                <AddToCartButton onClick={() => addToCart(selectedProduct)}>
+                  Aggiungi al carrello
+                </AddToCartButton>
+                <button
+                  onClick={() => setSelectedProduct(null)}
+                  style={{
+                    marginTop: '10px',
+                    marginLeft: '10px',
+                    padding: '10px 20px',
+                    backgroundColor: '#ccc',
+                    color: 'black',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                  }}
+                >
+                  Chiudi
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+      
         {/* Filtri Laterali */}
         <Sidebar>
-        <FilterTitle>Prezzo</FilterTitle>
-        {[
-          { label: 'Fino a 20 euro', maxPrice: 20 },
-          { label: 'Fino a 30 euro', maxPrice: 30 },
-          { label: 'Fino a 40 euro', maxPrice: 40 },
-          { label: 'Più di 50 euro', maxPrice: 51 }, // Valore speciale per prodotti sopra 50€
-        ].map((range, index) => (
-          <FilterOption key={index}>
-            <Checkbox
-              type="checkbox"
-              checked={selectedPriceRange === range.maxPrice}
-              onChange={() => handlePriceRangeChange(range.maxPrice)}
-            />
-            {range.label}
-          </FilterOption>
-        ))}
-      </Sidebar>
-
+          <FilterTitle>Prezzo</FilterTitle>
+          {[
+            { label: 'Fino a 20 euro', maxPrice: 20 },
+            { label: 'Fino a 30 euro', maxPrice: 30 },
+            { label: 'Fino a 40 euro', maxPrice: 40 },
+            { label: 'Più di 50 euro', maxPrice: 51 }, // Valore speciale per prodotti sopra 50€
+          ].map((range, index) => (
+            <FilterOption key={index}>
+              <Checkbox
+                type="checkbox"
+                checked={selectedPriceRange === range.maxPrice}
+                onChange={() => handlePriceRangeChange(range.maxPrice)}
+              />
+              {range.label}
+            </FilterOption>
+          ))}
+        </Sidebar>
 
 
         {/* Sezione Principale */}
@@ -198,8 +276,12 @@ const ProductsCatalog = () => {
                 <ProductImage
                   src={`http://localhost:1337${product.image}`}
                   alt={product.name}
+                  onClick={() => handleProductClick(product)}
+                  style={{ cursor: 'pointer' }}
                 />
-                <ProductName>{product.name}</ProductName>
+                <ProductName onClick={() => handleProductClick(product)} style={{ cursor: 'pointer' }}>
+                  {product.name}
+                </ProductName>
                 <ProductPrice>{`€${product.price.toFixed(2)}`}</ProductPrice>
 
 
@@ -209,7 +291,10 @@ const ProductsCatalog = () => {
               </ProductCard>
             ))}
           </ProductGrid>
+          
         </MainContent>
+        </>
+        )}
       </CatalogContainer>
     </>
   );

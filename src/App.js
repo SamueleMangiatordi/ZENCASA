@@ -10,7 +10,6 @@ import AdminPage from './pages/AdminPage';
 import Register from './pages/Register';
 import CompletaProfilo from './pages/CompletaProfilo';
 import ProductsCatalog from './pages/Catalog';
-import ProductDetails from './pages/ProductDetails'; // Import del componente pagina di dettaglio
 import Cart from './pages/Cart';
 import Catalog from './pages/Catalog';
 import User from './pages/User';
@@ -59,7 +58,7 @@ function App() {
               />
             }
           />
-          <Route path="/products/:documentId" element={<ProductDetails />} />
+          <Route path="/products/:documentId" element={<Catalog />} />
           <Route path="/register" element={<Register />} />
           <Route path="/completa-profilo" element={<CompletaProfilo />} />
           <Route path="/cart" element={<Cart cartItems={cartItems || []} />} />
