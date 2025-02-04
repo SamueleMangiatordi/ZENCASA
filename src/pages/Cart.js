@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // Aggiunto useLocation
+import { useNavigate, useLocation } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 
 import {
@@ -40,10 +40,14 @@ const stripePromise = loadStripe(
 const Cart = () => {
   const [products, setProducts] = useState([]);
   const [isCheckoutVisible, setIsCheckoutVisible] = useState(false);
+
+  // Carrello salvato in localStorage, se presente
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem("cart");
     return savedCart ? JSON.parse(savedCart) : [];
   });
+
+  // Dati del form di spedizione
   const [formData, setFormData] = useState({
     name: "",
     surname: "",
@@ -52,30 +56,33 @@ const Cart = () => {
     city: "",
   });
 
-  // A) Stato per rilevare il pagamento andato a buon fine
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  // Stati vari
+  const [paymentSuccess, setPaymentSuccess] = useState(false); // mostra pop-up
+  const [orderSaved, setOrderSaved] = useState(false); // evita salvataggi multipli
 
-  // Soglie e costi
+  // Soglie di spedizione e sconto
   const SHIPPING_COST = 5.6;
   const FREE_SHIPPING_THRESHOLD = 50;
   const DISCOUNT_THRESHOLD = 100;
 
   const navigate = useNavigate();
-  const location = useLocation(); // Per leggere la query string (es. ?success=true)
+  const location = useLocation();
 
-  // B) Controllo se nella query string è presente "success=true"
-  //    Se sì, svuoto il carrello e mostro il messaggio di ordine completato
+  // ---------------------------------------------------
+  // 1) Se la pagina ha un session_id, il pagamento è riuscito.
+  //    Salva l'ordine su Strapi (se non già salvato).
+  // ---------------------------------------------------
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    if (searchParams.get("success") === "true") {
-      setPaymentSuccess(true);
-      // Svuota il carrello
-      localStorage.removeItem("cart");
-      setCart([]);
-    }
-  }, [location.search]);
+    const sessionId = searchParams.get("session_id");
 
-  // Recupera i prodotti
+    if (sessionId && !orderSaved) {
+      setPaymentSuccess(true);
+      saveOrderToDatabase();
+    }
+  }, [location.search, orderSaved]);
+
+  // Recupera i prodotti dal backend (catalogo)
   useEffect(() => {
     const getProducts = async () => {
       try {
@@ -88,7 +95,9 @@ const Cart = () => {
     getProducts();
   }, []);
 
-  // Funzioni per aggiornare il carrello
+  // -----------------------------
+  // Funzioni per GESTIRE il carrello
+  // -----------------------------
   const increaseQuantity = (documentId) => {
     const updatedCart = cart.map((item) =>
       item.documentId === documentId
@@ -125,14 +134,13 @@ const Cart = () => {
     }));
   };
 
-  // Mostra il form di checkout
   const handleProceedToCheckout = () => {
     if (cart.length > 0) {
       setIsCheckoutVisible(true);
     }
   };
 
-  // Calcola totali
+  // Calcoli totali del carrello
   const totalCost = cart.reduce((total, item) => {
     const product = products.find((prod) => prod.documentId === item.documentId);
     const price = product ? product.prezzo_unitario : 0;
@@ -142,7 +150,68 @@ const Cart = () => {
   const shippingCost = totalCost >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
   const discount = totalCost >= DISCOUNT_THRESHOLD ? totalCost * 0.1 : 0;
 
-  // Funzione di pagamento con Stripe
+  // ------------------------------------------------------
+  // SALVA L'ORDINE SU STRAPI DOPO IL PAGAMENTO RIUSCITO
+  // ------------------------------------------------------
+  const saveOrderToDatabase = async () => {
+    // Struttura dati per Strapi (v4): { data: { ... } }
+    const orderData = {
+      data: {
+        customer: {
+          name: formData.name,
+          surname: formData.surname,
+          address1: formData.address1,
+          postalCode: formData.postalCode,
+          city: formData.city,
+        },
+        items: cart.map((item) => {
+          const product = products.find(
+            (prod) => prod.documentId === item.documentId
+          );
+          return {
+            name: product ? product.nome_prodotto : "Prodotto sconosciuto",
+            quantity: item.quantity,
+            price: product ? product.prezzo_unitario : 0,
+          };
+        }),
+        totalAmount: totalCost + shippingCost - discount,
+        shippingCost,
+        discount,
+      },
+    };
+
+    try {
+      // Esempio: POST su ordine-prodottos?populate...
+      // Se la tua Strapi collection è configurata così
+      const response = await fetch(
+        "http://localhost:1337/ordine-prodottos?populate[cod_ordine][populate]=user&populate=cod_prodotto",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(orderData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorDetails = await response.json();
+        console.error("Dettagli errore dal server Strapi:", errorDetails);
+        throw new Error("Errore nel salvataggio dell'ordine");
+      }
+
+      console.log("Ordine salvato con successo!");
+      setOrderSaved(true);
+
+      // Svuota il carrello solo dopo il salvataggio
+      localStorage.removeItem("cart");
+      setCart([]);
+    } catch (error) {
+      console.error("Errore nel salvataggio dell'ordine:", error);
+    }
+  };
+
+  // ------------------------------
+  // PAGAMENTO CON STRIPE
+  // ------------------------------
   const handlePayment = async () => {
     if (cart.length === 0) {
       alert("Il carrello è vuoto. Aggiungi un prodotto per procedere.");
@@ -170,21 +239,22 @@ const Cart = () => {
           quantity: item.quantity,
         };
       }),
-      shippingCost: shippingCost,
-      discount: discount,
-      // IMPORTANTE:
-      // Assicurati di impostare correttamente successUrl e cancelUrl
-      // nel tuo backend node (create-checkout-session). Ad esempio:
-      // successUrl: "http://localhost:3000/cart?success=true",
-      // cancelUrl: "http://localhost:3000/cart"
+      shippingCost,
+      discount,
+      // Nel tuo backend node/express, crea la sessione con:
+      // success_url: "http://localhost:3000/cart?session_id={CHECKOUT_SESSION_ID}",
+      // cancel_url: "http://localhost:3000/cart"
     };
 
     try {
-      const response = await fetch("http://localhost:4242/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        "http://localhost:4242/create-checkout-session",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!response.ok) {
         console.error("Errore nella risposta del backend", response);
@@ -204,7 +274,9 @@ const Cart = () => {
       }
 
       const stripe = await stripePromise;
-      const { error } = await stripe.redirectToCheckout({ sessionId: session.id });
+      const { error } = await stripe.redirectToCheckout({
+        sessionId: session.id,
+      });
       if (error) {
         console.error("Stripe error:", error);
         alert(error.message);
@@ -215,51 +287,77 @@ const Cart = () => {
     }
   };
 
-  // 1) Funzione per gestire l'invio del form e bloccare il comportamento predefinito
+  // Evita il refresh della pagina e avvia il pagamento
   const handleFormSubmit = (e) => {
-    e.preventDefault(); // Evita il refresh della pagina
-    handlePayment(); // Chiama la logica del pagamento
+    e.preventDefault();
+    handlePayment();
   };
 
-  // C) Se il pagamento è avvenuto con successo, mostro un messaggio di conferma
-  if (paymentSuccess) {
-    return (
-      <>
-        <Banner>Spedizione gratuita per ordini superiori a 50 euro</Banner>
-        <Header>
-          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-            <Title>Zencasa</Title>
-            <nav style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-              <StyledButton to="/">HOME</StyledButton>
-              <StyledButton to="/products">CATALOGO</StyledButton>
-              <StyledButton
-                as="a"
-                href="https://wa.me/393883816904"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                CONTATTI
-              </StyledButton>
-            </nav>
-          </div>
-          <StyledButton to="/profile">👤 Profilo</StyledButton>
-        </Header>
+  // Chiudi il pop-up
+  const handleClosePopup = () => {
+    setPaymentSuccess(false);
+  };
 
-        <div style={{ margin: "50px", textAlign: "center" }}>
-          <h2>Grazie per l'acquisto!</h2>
-          <p>Il tuo ordine è stato completato con successo. Riceverai presto un'email di conferma.</p>
-          <p>
-            Puoi tornare alla <StyledButton to="/">Home</StyledButton> o
-            visitare il <StyledButton to="/products">Catalogo</StyledButton> per continuare lo shopping.
-          </p>
-        </div>
-      </>
-    );
-  }
-
-  // D) Altrimenti, mostra il carrello normale o il form di checkout
   return (
     <>
+      {/* Pop-up se il pagamento è andato a buon fine */}
+      {paymentSuccess && (
+        <div
+          style={{
+            position: "fixed",
+            zIndex: 9999,
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#fff",
+              padding: "25px",
+              borderRadius: "12px",
+              maxWidth: "420px",
+              textAlign: "center",
+              boxShadow: "0px 5px 15px rgba(0,0,0,0.2)",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: "1.5rem",
+                marginBottom: "10px",
+                color: "#28a745",
+              }}
+            >
+              🎉 Grazie per aver completato il tuo ordine! 🎉
+            </h2>
+            <p style={{ fontSize: "1rem", color: "#555" }}>
+              📦 Riceverai una mail con i dettagli dell'ordine e il numero di
+              tracciamento dal nostro corriere al più presto! 📦
+            </p>
+            <button
+              onClick={handleClosePopup}
+              style={{
+                marginTop: "20px",
+                padding: "10px 20px",
+                backgroundColor: "#007BFF",
+                color: "#fff",
+                border: "none",
+                borderRadius: "6px",
+                fontSize: "1rem",
+                cursor: "pointer",
+              }}
+            >
+              Chiudi
+            </button>
+          </div>
+        </div>
+      )}
+
       <Banner>Spedizione gratuita per ordini superiori a 50 euro</Banner>
       <Header>
         <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
@@ -299,6 +397,7 @@ const Cart = () => {
             </button>
           )}
 
+          {/* SEZIONE CARRELLO */}
           {!isCheckoutVisible ? (
             <>
               <FreeShippingContainer style={{ marginBottom: "20px", width: "90%" }}>
@@ -374,7 +473,8 @@ const Cart = () => {
                             📦 {product.nome_prodotto} 📦
                           </span>
                           <span style={{ color: "#555", fontSize: "1rem" }}>
-                            💶 Prezzo unitario: €{product.prezzo_unitario.toFixed(2)}
+                            💶 Prezzo unitario: €
+                            {product.prezzo_unitario.toFixed(2)}
                           </span>
                         </ProductInfo>
                       </div>
@@ -416,7 +516,8 @@ const Cart = () => {
                           </button>
                         </QuantityControls>
                         <span style={{ fontWeight: "bold" }}>
-                          €{(item.quantity * product.prezzo_unitario).toFixed(2)}
+                          €
+                          {(item.quantity * product.prezzo_unitario).toFixed(2)}
                         </span>
                       </div>
                       <button
@@ -438,7 +539,7 @@ const Cart = () => {
               </ProductList>
             </>
           ) : (
-            // 2) Usiamo <CheckoutForm> come <form> e gestiamo onSubmit
+            // SEZIONE CHECKOUT FORM
             <CheckoutForm onSubmit={handleFormSubmit}>
               <h2>Inserisci i dettagli di spedizione</h2>
               <FormField>
@@ -511,10 +612,12 @@ const Cart = () => {
           )}
         </div>
 
+        {/* RIEPILOGO ORDINE */}
         <SummarySection>
           <h2>Riepilogo dell'ordine</h2>
           <SummaryItem>
-            <span>Subtotale</span> <span>€{totalCost.toFixed(2)}</span>
+            <span>Subtotale</span>{" "}
+            <span>€{totalCost.toFixed(2)}</span>
           </SummaryItem>
           <SummaryItem>
             <span>Spedizione</span>{" "}

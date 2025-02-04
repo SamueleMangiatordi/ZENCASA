@@ -505,7 +505,7 @@ const ContactSection = styled.div`
   justify-content: space-between;
   align-items: flex-start;
   padding: 40px;
-  background-color: #f9f9f9;
+  background-color: #f2f2f2;
 `;
 
 const ContactInfo2 = styled.div`

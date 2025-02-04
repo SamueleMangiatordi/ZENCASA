@@ -63,7 +63,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/completa-profilo" element={<CompletaProfilo />} />
           <Route path="/cart" element={<Cart cartItems={cartItems || []} />} />
-          <Route path="/success" element={<Cart />} />
+          <Route path="/cart?session_id={CHECKOUT_SESSION_ID}" element={<Cart />} />
           <Route path="/user" element={<User/>} />
           <Route path="/service" element={<ServicePage />} />
         </Routes>

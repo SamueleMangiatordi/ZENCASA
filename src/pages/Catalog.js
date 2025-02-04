@@ -113,9 +113,7 @@ const ProductsCatalog = () => {
     filteredProducts.sort((a, b) => a.price - b.price);
   } else if (sortOption === 'Prezzo decrescente') {
     filteredProducts.sort((a, b) => b.price - a.price);
-  } else if (sortOption === 'I nostri preferiti') {
-    filteredProducts = shuffleArray(filteredProducts);
-  }
+  } 
 
   // Stato di caricamento ed errori
   if (loading) {
@@ -150,9 +148,9 @@ const ProductsCatalog = () => {
           <StyledButton to="/login" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <Icon>👤</Icon>
           </StyledButton>
-          <AddToCartButton onClick={() => navigate('/cart')}>
-            🛒 Carrello ({cart.reduce((total, item) => total + item.quantity, 0)})
-          </AddToCartButton>
+          <StyledButton to="/cart" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <Icon>🛍️</Icon>
+          </StyledButton>
         </div>
       </Header>
 
@@ -160,18 +158,25 @@ const ProductsCatalog = () => {
       <CatalogContainer>
         {/* Filtri Laterali */}
         <Sidebar>
-          <FilterTitle>Prezzo</FilterTitle>
-          {[{ label: 'Fino a 20 euro', maxPrice: 20 }].map((range, index) => (
-            <FilterOption key={index}>
-              <Checkbox
-                type="checkbox"
-                checked={selectedPriceRange === range.maxPrice}
-                onChange={() => handlePriceRangeChange(range.maxPrice)}
-              />
-              {range.label}
-            </FilterOption>
-          ))}
-        </Sidebar>
+        <FilterTitle>Prezzo</FilterTitle>
+        {[
+          { label: 'Fino a 20 euro', maxPrice: 20 },
+          { label: 'Fino a 30 euro', maxPrice: 30 },
+          { label: 'Fino a 40 euro', maxPrice: 40 },
+          { label: 'Più di 50 euro', maxPrice: 51 }, // Valore speciale per prodotti sopra 50€
+        ].map((range, index) => (
+          <FilterOption key={index}>
+            <Checkbox
+              type="checkbox"
+              checked={selectedPriceRange === range.maxPrice}
+              onChange={() => handlePriceRangeChange(range.maxPrice)}
+            />
+            {range.label}
+          </FilterOption>
+        ))}
+      </Sidebar>
+
+
 
         {/* Sezione Principale */}
         <MainContent>
@@ -181,7 +186,6 @@ const ProductsCatalog = () => {
               value={sortOption}
               onChange={(e) => handleSortChange(e.target.value)}
             >
-              <option value="I nostri preferiti">I nostri preferiti</option>
               <option value="Prezzo crescente">Prezzo crescente</option>
               <option value="Prezzo decrescente">Prezzo decrescente</option>
             </select>
@@ -197,9 +201,11 @@ const ProductsCatalog = () => {
                 />
                 <ProductName>{product.name}</ProductName>
                 <ProductPrice>{`€${product.price.toFixed(2)}`}</ProductPrice>
+
+
                 <AddToCartButton onClick={() => addToCart(product)}>
-                  Aggiungi al carrello
-                </AddToCartButton>
+                Aggiungi al carrello
+              </AddToCartButton>
               </ProductCard>
             ))}
           </ProductGrid>

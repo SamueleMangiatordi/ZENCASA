@@ -47,6 +47,12 @@ import { useAuth } from '../data/authContext';
 
 
 const AdminPage = () => {
+  
+  const [showAddProductForm, setShowAddProductForm] = useState(false);
+const [newProductName, setNewProductName] = useState('');
+const [newProductPrice, setNewProductPrice] = useState('');
+const [newProductDescription, setNewProductDescription] = useState('');
+const [newProductQuantity, setNewProductQuantity] = useState('');
   const [activeSection, setActiveSection] = useState('statistiche');
   //const { isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -302,6 +308,7 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
     setEditingDescription(''); // Resetta la descrizione
   };
   
+  
   const saveProduct = async () => {
     console.log(localStorage.getItem('jwt'));
     if (!editingName || !editingPrice) {
@@ -317,13 +324,12 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
           descrizione: editingDescription,
           quantita_disponibili: parseInt(editingQuantity, 10),
         },
-      },
-      {
-        
+      }, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('jwt')}`, // Assicurati che il token sia presente
+          Authorization: `Bearer ${localStorage.getItem('jwt')}`,
         },
       });
+      
   
       // Aggiorna lo stato locale
       setProducts((prev) =>
@@ -347,6 +353,84 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
       alert('Errore durante la modifica del prodotto.');
     }
   };
+
+  // Funzione per aggiungere un nuovo prodotto
+const handleAddProduct = async (e) => {
+  e.preventDefault();
+
+  // Controlli di validità del form
+  if (!newProductName || !newProductPrice || !newProductQuantity) {
+    alert('Nome, Prezzo e Quantità sono obbligatori!');
+    return;
+  }
+
+  try {
+    // Chiama la API POST di Strapi
+    const response = await axios.post(
+      `${PRODUCTS_URL}`, 
+      {
+        data: {
+          nome_prodotto: newProductName,
+          prezzo_unitario: parseFloat(newProductPrice),
+          descrizione: newProductDescription,
+          quantita_disponibili: parseInt(newProductQuantity, 10),
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jwt')}`,
+        },
+      }
+    );
+
+    // Se la chiamata va a buon fine, aggiorna lo stato "products" localmente
+    const createdProduct = response.data.data;
+    // Mappa il prodotto come fai per gli altri (per consistenza)
+    const imageUrl = '/default-image.jpg'; // O gestisci come preferisci
+    const mapped = {
+      documentId: createdProduct.id, // o "createdProduct.attributes.documentId" se usi quello
+      name: createdProduct.attributes.nome_prodotto,
+      description: createdProduct.attributes.descrizione,
+      price: createdProduct.attributes.prezzo_unitario,
+      quantity: createdProduct.attributes.quantita_disponibili,
+      image: `http://localhost:1337${imageUrl}`,
+    };
+
+    setProducts((prev) => [...prev, mapped]);
+    alert('Prodotto aggiunto con successo!');
+    
+    // Reset dei campi form e chiusura form
+    setNewProductName('');
+    setNewProductPrice('');
+    setNewProductDescription('');
+    setNewProductQuantity('');
+    setShowAddProductForm(false);
+
+  } catch (err) {
+    console.error('Errore durante l\'aggiunta del prodotto:', err);
+    alert('Errore durante l\'aggiunta del prodotto.');
+  }
+};
+
+// Funzione per eliminare un prodotto
+const handleDeleteProduct = async (documentId) => {
+  try {
+    // Chiama la API DELETE
+    await axios.delete(`${PRODUCTS_URL}/${products.documentId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('jwt')}`,
+      },
+    });
+    
+    // Rimuovi il prodotto dallo stato locale
+    setProducts((prev) => prev.filter((product) => product.documentId !== documentId));
+    alert('Prodotto eliminato con successo!');
+  } catch (err) {
+    console.error('Errore durante l\'eliminazione del prodotto:', err);
+    alert('Errore durante l\'eliminazione del prodotto.');
+  }
+};
+
   
 
   const toggleProductsVisibility = (documentId) => {
@@ -513,113 +597,100 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
 
               {/* Link utili */}
               <div
-                style={{
-                  marginTop: '40px',
-                  padding: '20px',
-                  backgroundColor: '#f9f9f9',
-                  borderRadius: '8px',
-                }}
-              >
-                <h2 style={{ marginBottom: '20px' }}>Link utili</h2>
+  style={{
+    marginTop: '40px',
+    padding: '20px',
+    backgroundColor: '#f4f4f4',
+    borderRadius: '12px',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+  }}
+>
+  <h2 style={{ marginBottom: '30px', textAlign: 'center', fontSize: '1.8rem', fontWeight: 'bold' }}>
+    Link Utili
+  </h2>
 
-                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                  <a
-                    href="https://app.fiscozen.it/app/dashboard"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      backgroundColor: '#007BFF',
-                      color: '#fff',
-                      padding: '10px 15px',
-                      borderRadius: '4px',
-                      textDecoration: 'none',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Contatta Commercialista
-                  </a>
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+    {/* Card Singola */}
+    {[
+      {
+        name: 'Contatta Commercialista',
+        image: 'https://s3-eu-west-1.amazonaws.com/tpd/logos/5dbac1b87f0f6d0001b30a84/0x0.png',
+        link: 'https://app.fiscozen.it/app/dashboard',
+        bgColor: '#ffffff',
+      },
+      {
+        name: 'Amazon Seller Central',
+        image: 'https://cdn.prod.website-files.com/5e69023976612cc1b93073cf/65becff5a9d744382c737c80_amazonseller.png',
+        link: 'https://sellercentral.amazon.it/',
+        bgColor: '#ffffff',
+      },
+      {
+        name: 'SeoZoom',
+        image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcoilGjSKXsfBTwqiv3QETGsOvhzsKhl73_A&s',
+        link: 'https://www.seozoom.it/#ctrck=gads?sorgente=gads',
+        bgColor: '#ffffff',
+      },
+      {
+        name: 'Cassetto Fiscale',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/5/5b/INPS_logo.png',
+        link: 'https://www.inps.it',
+        bgColor: '#ffffff',
+      },
+      {
+        name: 'Bartolini',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Logo_BRT.svg/2560px-Logo_BRT.svg.png',
+        link: 'https://services.brt.it/it/area-clienti',
+        bgColor: '#ffffff',
+      },
+    ].map((item, index) => (
+      <div
+        key={index}
+        style={{
+          backgroundColor: item.bgColor,
+          borderRadius: '12px',
+          padding: '20px',
+          textAlign: 'center',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          cursor: 'pointer',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        }}
+      >
+        <img
+          src={item.image}
+          alt={item.name}
+          style={{
+            width: '100%',
+            height: '120px',
+            objectFit: 'contain',
+            marginBottom: '15px',
+          }}
+        />
+        <a
+          href={item.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            textDecoration: 'none',
+            color: '#007bff',
+            fontWeight: 'bold',
+            fontSize: '1rem',
+          }}
+        >
+          {item.name}
+        </a>
+      </div>
+    ))}
+  </div>
+</div>
 
-                  <a
-                    href="https://sellercentral.amazon.it/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      backgroundColor: '#28a745',
-                      color: '#fff',
-                      padding: '10px 15px',
-                      borderRadius: '4px',
-                      textDecoration: 'none',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Amazon Seller Central
-                  </a>
-
-                  <a
-                    href="https://programma-affiliazione.amazon.it/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      backgroundColor: '#17a2b8',
-                      color: '#fff',
-                      padding: '10px 15px',
-                      borderRadius: '4px',
-                      textDecoration: 'none',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Affiliazione Amazon
-                  </a>
-
-                  <a
-                    href="https://www.inps.it"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      backgroundColor: '#ffc107',
-                      color: '#000',
-                      padding: '10px 15px',
-                      borderRadius: '4px',
-                      textDecoration: 'none',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Cassetto Fiscale
-                  </a>
-
-                  <a
-                    href="https://app.fiscozen.it/app/adempimenti"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      backgroundColor: '#6f42c1',
-                      color: '#fff',
-                      padding: '10px 15px',
-                      borderRadius: '4px',
-                      textDecoration: 'none',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    I tuoi adempimenti
-                  </a>
-
-                  <a
-                    href="https://services.brt.it/it/area-clienti?_gl=1*ggrmsa*_ga*OTE3MTc2MTYwLjE3MzcxMjY0MDA.*_ga_Q3RB6RNZ25*MTczNzEyNjM5OS4xLjEuMTczNzEyNjQ0My4xNi4wLjA.*_ga_ZH0LMMM3CM*MTczNzEyNjM5OS4xLjEuMTczNzEyNjQ0My4xNi4wLjA."
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      backgroundColor: '#6f42c1',
-                      color: '#fff',
-                      padding: '10px 15px',
-                      borderRadius: '4px',
-                      textDecoration: 'none',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Bartolini
-                  </a>
-                </div>
-              </div>
             </>
           )}
 
@@ -701,28 +772,130 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
 
           {activeSection === 'riferimentiFornitore' && (
   <>
-    <h2>Riferimenti Fornitore</h2>
+  <>
+  <h2 style={{ textAlign: 'center', marginBottom: '30px', fontSize: '1.8rem', fontWeight: 'bold' }}>
+    Riferimenti Fornitore
+  </h2>
 
-    {/* Contenitore per i pulsanti */}
-    <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-      {/* Bottone per aggiungere un nuovo fornitore */}
+  <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginBottom: '20px' }}>
+    <button
+      onClick={() => setShowForm(!showForm)}
+      style={{
+        padding: '10px 15px',
+        backgroundColor: '#007BFF',
+        color: '#fff',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontWeight: 'bold',
+      }}
+    >
+      Aggiungi Fornitore
+    </button>
+
+    <button
+      onClick={() => setShowDeleteForm(!showDeleteForm)}
+      style={{
+        padding: '10px 15px',
+        backgroundColor: '#FF0000',
+        color: '#fff',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontWeight: 'bold',
+      }}
+    >
+      Elimina Fornitore
+    </button>
+  </div>
+
+  {showForm && (
+    <form
+      onSubmit={handleAddSupplier}
+      style={{
+        marginBottom: '20px',
+        padding: '20px',
+        border: '1px solid #ddd',
+        borderRadius: '12px',
+        backgroundColor: '#f9f9f9',
+        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+      }}
+    >
+      <div style={{ marginBottom: '15px' }}>
+        <label>
+          Nome:
+          <input
+            type="text"
+            value={newSupplier.name}
+            onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
+            style={{ marginLeft: '10px', padding: '8px', width: '90%' }}
+          />
+        </label>
+      </div>
+      <div style={{ marginBottom: '15px' }}>
+        <label>
+          Link:
+          <input
+            type="text"
+            value={newSupplier.link}
+            onChange={(e) => setNewSupplier({ ...newSupplier, link: e.target.value })}
+            style={{ marginLeft: '10px', padding: '8px', width: '90%' }}
+          />
+        </label>
+      </div>
+      <div style={{ marginBottom: '15px' }}>
+        <label>
+          Logo:
+          <input
+            type="text"
+            value={newSupplier.logo}
+            onChange={(e) => setNewSupplier({ ...newSupplier, logo: e.target.value })}
+            style={{ marginLeft: '10px', padding: '8px', width: '90%' }}
+          />
+        </label>
+      </div>
       <button
-        onClick={() => setShowForm(!showForm)}
+        type="submit"
         style={{
           padding: '10px 15px',
-          backgroundColor: '#007BFF',
+          backgroundColor: '#28a745',
           color: '#fff',
           border: 'none',
           borderRadius: '4px',
           cursor: 'pointer',
+          fontWeight: 'bold',
         }}
       >
-        Aggiungi Fornitore
+        Continua
       </button>
+    </form>
+  )}
 
-      {/* Bottone per eliminare un fornitore */}
+  {showDeleteForm && (
+    <form
+      onSubmit={handleDeleteSupplier}
+      style={{
+        marginBottom: '20px',
+        padding: '20px',
+        border: '1px solid #ddd',
+        borderRadius: '12px',
+        backgroundColor: '#f9f9f9',
+        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+      }}
+    >
+      <div style={{ marginBottom: '15px' }}>
+        <label>
+          Nome del Fornitore da Eliminare:
+          <input
+            type="text"
+            value={supplierToDelete}
+            onChange={(e) => setSupplierToDelete(e.target.value)}
+            style={{ marginLeft: '10px', padding: '8px', width: '90%' }}
+          />
+        </label>
+      </div>
       <button
-        onClick={() => setShowDeleteForm(!showDeleteForm)}
+        type="submit"
         style={{
           padding: '10px 15px',
           backgroundColor: '#FF0000',
@@ -730,181 +903,92 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
           border: 'none',
           borderRadius: '4px',
           cursor: 'pointer',
+          fontWeight: 'bold',
         }}
       >
-        Elimina Fornitore
+        Elimina
       </button>
-    </div>
+    </form>
+  )}
 
-    {/* Form per aggiungere un nuovo fornitore */}
-    {showForm && (
-      <form
-        onSubmit={handleAddSupplier}
+  <div
+    style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+      gap: '20px',
+      marginTop: '20px',
+    }}
+  >
+    {[
+      {
+        name: 'Zentrada',
+        link: 'https://www.zentrada.com/it/',
+        logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBPz_hTPHnIVjjbli09Wvw00ACmOxDZcBT0g&s',
+      },
+      {
+        name: 'Donato Martinelli',
+        link: 'https://www.donatomartinelli.com/',
+        logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHpVv6B687OBwQXXlnla8j-yys92_Xj_Aheg&s',
+      },
+      {
+        name: 'Alibaba',
+        link: 'https://www.alibaba.com/',
+        logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/alibaba-color.png',
+      },
+      {
+        name: 'GreenFoam',
+        link: 'https://www.greenfoam.it/',
+        logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTycJCDXOYYTPt753BudVG6V1W9cG7uKKX6TA&s',
+      },
+      ...suppliers,
+    ].map((supplier, index) => (
+      <div
+        key={index}
         style={{
-          marginBottom: '20px',
-          padding: '10px',
-          border: '1px solid #ddd',
-          borderRadius: '8px',
-          backgroundColor: '#f9f9f9',
+          backgroundColor: '#fff',
+          borderRadius: '12px',
+          padding: '20px',
+          textAlign: 'center',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.2)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
         }}
       >
-        <div style={{ marginBottom: '10px' }}>
-          <label>
-            Nome:
-            <input
-              type="text"
-              value={newSupplier.name}
-              onChange={(e) =>
-                setNewSupplier({ ...newSupplier, name: e.target.value })
-              }
-              style={{ marginLeft: '10px', padding: '5px', width: '80%' }}
-            />
-          </label>
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label>
-            Link:
-            <input
-              type="text"
-              value={newSupplier.link}
-              onChange={(e) =>
-                setNewSupplier({ ...newSupplier, link: e.target.value })
-              }
-              style={{ marginLeft: '10px', padding: '5px', width: '80%' }}
-            />
-          </label>
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label>
-            Logo:
-            <input
-              type="text"
-              value={newSupplier.logo}
-              onChange={(e) =>
-                setNewSupplier({ ...newSupplier, logo: e.target.value })
-              }
-              style={{ marginLeft: '10px', padding: '5px', width: '80%' }}
-            />
-          </label>
-        </div>
-        <button
-          type="submit"
+        <img
+          src={supplier.logo}
+          alt={`${supplier.name} logo`}
           style={{
-            padding: '10px 15px',
-            backgroundColor: '#28a745',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
+            width: '100%',
+            height: '120px',
+            objectFit: 'contain',
+            marginBottom: '15px',
+          }}
+        />
+        <a
+          href={supplier.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            textDecoration: 'none',
+            color: '#007bff',
+            fontWeight: 'bold',
+            fontSize: '1rem',
           }}
         >
-          Continua
-        </button>
-      </form>
-    )}
+          {supplier.name}
+        </a>
+      </div>
+    ))}
+  </div>
+</>
 
-    {/* Form per eliminare un fornitore */}
-    {showDeleteForm && (
-      <form
-        onSubmit={handleDeleteSupplier}
-        style={{
-          marginBottom: '20px',
-          padding: '10px',
-          border: '1px solid #ddd',
-          borderRadius: '8px',
-          backgroundColor: '#f9f9f9',
-        }}
-      >
-        <div style={{ marginBottom: '10px' }}>
-          <label>
-            Nome del Fornitore da Eliminare:
-            <input
-              type="text"
-              value={supplierToDelete}
-              onChange={(e) => setSupplierToDelete(e.target.value)}
-              style={{ marginLeft: '10px', padding: '5px', width: '80%' }}
-            />
-          </label>
-        </div>
-        <button
-          type="submit"
-          style={{
-            padding: '10px 15px',
-            backgroundColor: '#FF0000',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
-          Elimina
-        </button>
-      </form>
-    )}
-
-    {/* Elenco dei fornitori */}
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
-      {[
-        {
-          name: 'Zentrada',
-          link: 'https://www.zentrada.com/it/',
-          logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBPz_hTPHnIVjjbli09Wvw00ACmOxDZcBT0g&s',
-        },
-        {
-          name: 'Donato Martinelli',
-          link: 'https://www.donatomartinelli.com/',
-          logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHpVv6B687OBwQXXlnla8j-yys92_Xj_Aheg&s',
-        },
-        {
-          name: 'Alibaba',
-          link: 'https://www.alibaba.com/',
-          logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/alibaba-color.png',
-        },
-        {
-          name: 'GreenFoam',
-          link: 'https://www.greenfoam.it/',
-          logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTycJCDXOYYTPt753BudVG6V1W9cG7uKKX6TA&s',
-        },
-        ...suppliers, // Aggiungi i fornitori dinamici
-      ].map((supplier, index) => (
-        <div
-          key={index}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            padding: '10px',
-            backgroundColor: '#fff',
-            width: '300px',
-          }}
-        >
-          <img
-            src={supplier.logo}
-            alt={`${supplier.name} logo`}
-            style={{
-              width: '50px',
-              height: '50px',
-              marginRight: '15px',
-              objectFit: 'contain',
-            }}
-          />
-          <a
-            href={supplier.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              fontSize: '16px',
-              fontWeight: 'bold',
-              color: '#007BFF',
-              textDecoration: 'none',
-            }}
-          >
-            {supplier.name}
-          </a>
-        </div>
-      ))}
-    </div>
   </>
 )}
 
@@ -918,11 +1002,91 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
     {loadingProducts && <p>Caricamento dei prodotti...</p>}
     {productsError && <p style={{ color: 'red' }}>{productsError}</p>}
 
+    {/* Bottone per mostrare/nascondere il form di aggiunta prodotto */}
+    {!loadingProducts && !productsError && (
+      <div style={{ marginBottom: '20px' }}>
+        <button
+          onClick={() => setShowAddProductForm(!showAddProductForm)}
+          style={{
+            padding: '10px 15px',
+            backgroundColor: '#28a745',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+          }}
+        >
+          {showAddProductForm ? 'Chiudi Form' : 'Aggiungi Prodotto'}
+        </button>
+      </div>
+    )}
+
+    {/* Form di aggiunta prodotto */}
+    {showAddProductForm && (
+      <form onSubmit={handleAddProduct} style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '10px' }}>
+          <label>Nome Prodotto:</label>
+          <input
+            type="text"
+            value={newProductName}
+            onChange={(e) => setNewProductName(e.target.value)}
+            style={{ marginLeft: '10px', padding: '5px', width: '70%' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '10px' }}>
+          <label>Prezzo:</label>
+          <input
+            type="number"
+            step="0.01"
+            value={newProductPrice}
+            onChange={(e) => setNewProductPrice(e.target.value)}
+            style={{ marginLeft: '10px', padding: '5px', width: '70%' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '10px' }}>
+          <label>Descrizione:</label>
+          <textarea
+            value={newProductDescription}
+            onChange={(e) => setNewProductDescription(e.target.value)}
+            style={{ marginLeft: '10px', padding: '5px', width: '70%' }}
+            rows="3"
+          />
+        </div>
+
+        <div style={{ marginBottom: '10px' }}>
+          <label>Quantità Disponibili:</label>
+          <input
+            type="number"
+            value={newProductQuantity}
+            onChange={(e) => setNewProductQuantity(e.target.value)}
+            style={{ marginLeft: '10px', padding: '5px', width: '70%' }}
+          />
+        </div>
+
+        <button
+          type="submit"
+          style={{
+            padding: '6px 12px',
+            backgroundColor: '#007bff',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+        >
+          Salva Prodotto
+        </button>
+      </form>
+    )}
+
     {!loadingProducts && !productsError && (
       <CatalogContainer style={{ marginTop: '20px' }}>
         <MainContent>
-        <div style={{ marginBottom: '20px' }}>
-        <input
+          <div style={{ marginBottom: '20px' }}>
+            <input
               type="text"
               placeholder="Cerca prodotto..."
               value={searchTerm}
@@ -934,110 +1098,124 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
                 borderRadius: '4px',
               }}
             />
-</div>
+          </div>
 
-<div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '20px' }}>
             <span>{filteredProducts.length} Prodotti trovati</span>
           </div>
 
+          <ProductGrid>
+            {filteredProducts.map((product) => (
+              <ProductCard key={product.id || product.documentId}>
 
-<ProductGrid>
-  {filteredProducts.map((product) => (
-    <ProductCard key={product.documentId}>
-      <ProductImage src={product.image} alt={product.name} />
-      
-      {editingProductId === product.documentId ? (
-        <>
-          {/* Modifica del prodotto */}
-          <input
-            type="text"
-            value={editingName}
-            onChange={(e) => setEditingName(e.target.value)}
-            placeholder="Nome prodotto"
-            style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
-          />
-          <input
-            type="number"
-            value={editingPrice}
-            onChange={(e) => setEditingPrice(e.target.value)}
-            placeholder="Prezzo"
-            style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
-          />
-          <textarea
-            value={editingDescription}
-            onChange={(e) => setEditingDescription(e.target.value)}
-            placeholder="Descrizione"
-            rows="3"
-            style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
-          />
-           <input
-              type="number"
-              value={editingQuantity}
-              onChange={(e) => setEditingQuantity(e.target.value)}
-              placeholder="Quantità Disponibili"
-              style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
-            />
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button
-              onClick={saveProduct}
-              style={{
-                padding: '5px 10px',
-                backgroundColor: '#28a745',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              Salva
-            </button>
-            <button
-              onClick={cancelEditing}
-              style={{
-                padding: '5px 10px',
-                backgroundColor: '#dc3545',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              Annulla
-            </button>
-          </div>
-        </>
-      ) : (
-        <>
-          {/* Visualizzazione normale del prodotto */}
-          <ProductName>{product.name}</ProductName>
-          <ProductPrice>{`€${product.price.toFixed(2)}`}</ProductPrice>
-          <p>Quantità: {product.quantity}</p>
-          <button
-            onClick={() => startEditing(product)}
-            style={{
-              padding: '5px 10px',
-              backgroundColor: '#007bff',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            Modifica
-          </button>
-        </>
-      )}
-    </ProductCard>
-  ))}
-</ProductGrid>
-
-
-
+                <ProductImage src={product.image} alt={product.name} />
+                
+                {editingProductId === product.documentId ? (
+                  <>
+                    {/* Modifica del prodotto */}
+                    <input
+                      type="text"
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      placeholder="Nome prodotto"
+                      style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
+                    />
+                    <input
+                      type="number"
+                      value={editingPrice}
+                      onChange={(e) => setEditingPrice(e.target.value)}
+                      placeholder="Prezzo"
+                      style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
+                    />
+                    <textarea
+                      value={editingDescription}
+                      onChange={(e) => setEditingDescription(e.target.value)}
+                      placeholder="Descrizione"
+                      rows="3"
+                      style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
+                    />
+                    <input
+                      type="number"
+                      value={editingQuantity}
+                      onChange={(e) => setEditingQuantity(e.target.value)}
+                      placeholder="Quantità Disponibili"
+                      style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
+                    />
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={saveProduct}
+                        style={{
+                          padding: '5px 10px',
+                          backgroundColor: '#28a745',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Salva
+                      </button>
+                      <button
+                        onClick={cancelEditing}
+                        style={{
+                          padding: '5px 10px',
+                          backgroundColor: '#dc3545',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Annulla
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Visualizzazione normale del prodotto */}
+                    <ProductName>{product.name}</ProductName>
+                    <ProductPrice>{`€${product.price.toFixed(2)}`}</ProductPrice>
+                    <p>Quantità: {product.quantity}</p>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => startEditing(product)}
+                        style={{
+                          padding: '5px 10px',
+                          backgroundColor: '#007bff',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Modifica
+                      </button>
+                      {/* Bottone per l'eliminazione del prodotto */}
+                      <button
+                        onClick={() => handleDeleteProduct(product.documentId)}
+                        style={{
+                          padding: '5px 10px',
+                          backgroundColor: '#dc3545',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Elimina
+                      </button>
+                    </div>
+                  </>
+                )}
+              </ProductCard>
+            ))}
+          </ProductGrid>
         </MainContent>
       </CatalogContainer>
     )}
   </>
 )}
+
 
 
           {/* SEZIONE ORDINI */}

@@ -11,6 +11,7 @@ import {
   LoginInput,
   LoginButton,
   RegistrationLink,
+  ErrorMessage,
   Loader
 } from '../styles/StyledLoginComponents';
 
@@ -67,23 +68,28 @@ const LoginPage = () => {
       });
 
       if (!userResponse.ok) {
+        setError('Errore durante il recupero dei dettagli utente.');
         throw new Error(`HTTP error! status: ${userResponse.status}`);
       }
 
       const userData = await userResponse.json();
       console.log('user data: ', userData);
 
+      // Logica di reindirizzamento basata sul ruolo
       if (userData.role?.name === 'Admin') {
-        // Salva il token e reindirizza alla pagina admin
         login(data.jwt, userData.role.name);
-        navigate('/admin');
+        navigate('/admin'); // Vai alla pagina admin
+      } else if (userData.role?.name === 'assistenzaClienti') {
+        login(data.jwt, userData.role.name);
+        navigate('/service'); // Vai alla pagina assistenza clienti
       } else {
-        // Salva il token e reindirizza alla pagina utente normale
         login(data.jwt, 'user');
-        navigate('/user');
+        navigate('/user'); // Vai alla pagina utente normale
       }
     } catch (error) {
-      console.error('Error logging in:', error);
+      console.error('Errore durante il login:', error);
+    } finally {
+      setLoading(false); // Ferma il caricamento
     }
   };
 
@@ -92,6 +98,12 @@ const LoginPage = () => {
     <LoginContainer>
       <LoginForm onSubmit={handleSubmit}>
         <LoginTitle>Accedi</LoginTitle>
+
+        {/* Mostra un messaggio di errore */}
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+
+        {loading && <Loader>Caricamento...</Loader>}
+
         
         <LoginLabel htmlFor="identifier">Email:</LoginLabel>
         <LoginInput 
@@ -113,7 +125,9 @@ const LoginPage = () => {
           required 
         />
 
-        <LoginButton type="submit">Login</LoginButton>
+        <LoginButton type="submit" disabled={loading}>
+          Login
+        </LoginButton>
         
         {/* Link alla pagina di registrazione */}
         <RegistrationLink>

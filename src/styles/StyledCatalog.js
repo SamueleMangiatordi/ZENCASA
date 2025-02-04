@@ -99,14 +99,14 @@ export const ProductTag = styled.span`
 
 export const AddToCartButton = styled.button`
   padding: 10px 20px;
-  background-color: #b22222;
-  color: white;
+  background-color: #ff9800;
+  color: black;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
 
   &:hover {
-    background-color: #9b1c1c;
+    background-color: #e68900;
   }
 `;
