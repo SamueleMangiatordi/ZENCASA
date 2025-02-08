@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
 import {
-  BrowserRouter as Router,
-  Routes,
-  Route
-} from 'react-router-dom';
+  BrowserRouter as Router, //definisce il contesto del router
+  Routes, //contiene tutti i percorsi delel'app
+  Route //definisce singole rotte e pagine corrispondenti
+} from 'react-router-dom'; //gestisce la navigazione
 import Home from './pages/Home';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
@@ -19,16 +18,16 @@ import {AuthProvider} from "./data/authContext";
 
 
 function App() {
-  const [cartItems, setCartItems] = useState([]);
+  //const [cartItems, setCartItems] = useState([]); //mantiene lo stato per il carrello, cartItems mantiene gli elementi.
   //const [products, setProducts] = useState([]); // Stato per i prodotti
   //const [loading, setLoading] = useState(true); // Stato di caricamento
   //const [error, setError] = useState(null); // Stato per gli errori
 
   return (
-    <AuthProvider>
-    <Router>
+    <AuthProvider> {/* Avvolgiamo in authProvider l'app che fornisce contesto navigazione*/ }
+    <Router>  {/* Definisce il router per gestire la navigazione dell'app. */ }
       <div>
-        <Routes>
+        <Routes> {/* Contiene tutte le rotte */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/admin/*" element={<AdminPage />} />
@@ -36,8 +35,8 @@ function App() {
           <Route path="/products/:documentId" element={<Catalog />} />
           <Route path="/register" element={<Register />} />
           <Route path="/completa-profilo" element={<CompletaProfilo />} />
-          <Route path="/cart" element={<Cart cartItems={cartItems || []} />} />
-          <Route path="/cart?session_id={CHECKOUT_SESSION_ID}" element={<Cart />} />
+          <Route path="/cart" element={<Cart/>} />
+          <Route path="/cart?session_id={CHECKOUT_SESSION_ID}" element={<Cart />} /> {/* Utilizzato per gestire il ritorno dal pagamento stripe*/}
           <Route path="/user" element={<User/>} />
           <Route path="/service" element={<ServicePage />} />
         </Routes>
