@@ -56,6 +56,7 @@ const Cart = () => {
     city: "",
   });
 
+
   // Stati vari
   const [paymentSuccess, setPaymentSuccess] = useState(false); // mostra pop-up
   const [orderSaved, setOrderSaved] = useState(false); // evita salvataggi multipli
@@ -375,7 +376,6 @@ const Cart = () => {
             </StyledButton>
           </nav>
         </div>
-        <StyledButton to="/profile">👤 Profilo</StyledButton>
       </Header>
 
       <CartContainer style={{ display: "flex", alignItems: "flex-start" }}>

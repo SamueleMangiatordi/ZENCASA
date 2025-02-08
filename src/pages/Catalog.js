@@ -152,9 +152,6 @@ const handleProductClick = (product) => {
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <StyledButton to="/login" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <Icon>👤</Icon>
-          </StyledButton>
           <StyledButton to="/cart" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <Icon>🛍️</Icon>
           </StyledButton>
