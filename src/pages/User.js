@@ -73,6 +73,7 @@ const User = () => {
         }
         const meData = await meRes.json();
         setUserData(meData);
+        sessionStorage.setItem("userId", meData.id);
 
         // Prepara i dati di edit con i campi modificabili
         setEditData({
@@ -124,6 +125,8 @@ const User = () => {
 
   // Logout
   const handleLogout = () => {
+    sessionStorage.removeItem("userId");
+    sessionStorage.removeItem(`cart_${userData.id}`);
     logout();
     navigate('/');
   };

@@ -18,11 +18,6 @@ import {AuthProvider} from "./data/authContext";
 
 
 function App() {
-  //const [cartItems, setCartItems] = useState([]); //mantiene lo stato per il carrello, cartItems mantiene gli elementi.
-  //const [products, setProducts] = useState([]); // Stato per i prodotti
-  //const [loading, setLoading] = useState(true); // Stato di caricamento
-  //const [error, setError] = useState(null); // Stato per gli errori
-
   return (
     <AuthProvider> {/* Avvolgiamo in authProvider l'app che fornisce contesto navigazione*/ }
     <Router>  {/* Definisce il router per gestire la navigazione dell'app. */ }

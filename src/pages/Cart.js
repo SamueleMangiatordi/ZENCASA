@@ -41,9 +41,9 @@ const Cart = () => {
   const [products, setProducts] = useState([]);
   const [isCheckoutVisible, setIsCheckoutVisible] = useState(false);
 
-  // Carrello salvato in localStorage, se presente
+  const userId = sessionStorage.getItem("userId") || "guest";
   const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem("cart");
+    const savedCart = sessionStorage.getItem(`cart_${userId}`);
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
@@ -96,6 +96,40 @@ const Cart = () => {
     getProducts();
   }, []);
 
+  const fetchUserData = async () => {
+    try {
+      const userId = sessionStorage.getItem("userId"); // Assumiamo che l'ID sia salvato qui
+      if (!userId) return;
+  
+      const response = await fetch(`http://localhost:1337/api/users/${userId}`);
+      if (!response.ok) {
+        throw new Error("Errore nel recupero dei dati utente");
+      }
+  
+      const userData = await response.json();
+      const user = userData.data || userData; // Adatta alla risposta di Strapi
+      console.log("USer id: ", userId);
+
+      setFormData({
+        name: user.nome || "",
+        surname: user.cognome || "",
+        address1: user.indirizzo || "",
+        postalCode: user.cap || "",
+        city: user.citta || "",
+      });
+    } catch (error) {
+      console.error("Errore nel recupero dei dati utente:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (userId) {
+      fetchUserData();
+    }
+  }, [userId]);
+
+  
+
   // -----------------------------
   // Funzioni per GESTIRE il carrello
   // -----------------------------
@@ -106,7 +140,7 @@ const Cart = () => {
         : item
     );
     setCart(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    sessionStorage.setItem(`cart_${userId}`, JSON.stringify(updatedCart));
   };
 
   const decreaseQuantity = (documentId) => {
@@ -118,13 +152,13 @@ const Cart = () => {
       )
       .filter((item) => item.quantity > 0);
     setCart(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    sessionStorage.setItem(`cart_${userId}`, JSON.stringify(updatedCart));
   };
 
   const removeFromCart = (documentId) => {
     const updatedCart = cart.filter((item) => item.documentId !== documentId);
     setCart(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    sessionStorage.setItem(`cart_${userId}`, JSON.stringify(updatedCart));
   };
 
   const handleInputChange = (e) => {
@@ -208,6 +242,7 @@ const Cart = () => {
     } catch (error) {
       console.error("Errore nel salvataggio dell'ordine:", error);
     }
+    sessionStorage.removeItem(`cart_${userId}`);
   };
 
   // ------------------------------
@@ -218,14 +253,8 @@ const Cart = () => {
       alert("Il carrello è vuoto. Aggiungi un prodotto per procedere.");
       return;
     }
-    if (
-      !formData.name ||
-      !formData.surname ||
-      !formData.address1 ||
-      !formData.postalCode ||
-      !formData.city
-    ) {
-      alert("Per favore, compila tutti i campi di spedizione.");
+    if (Object.values(formData).some((field) => field.trim() === "")) {
+      alert("I dati di spedizione non sono completi. Verifica il tuo profilo.");
       return;
     }
 

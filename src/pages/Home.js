@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from "react"; //hook per gestire lo stato locale
 import {
   Banner,
   Header,
@@ -45,19 +45,19 @@ import {
   WhatsAppButton,
   StoryButton
 } from "../styles/StyledComponents";
-import { useAuth } from '../data/authContext';
-import { useNavigate } from "react-router-dom";
+import { useAuth } from '../data/authContext'; //recupera stato di autenticazione
+import { useNavigate } from "react-router-dom"; //per la navigazione dinamica fra le pagine
 
 const Home = () => {
-  const [email, setEmail] = useState('');
-  const { isAuthenticated, role } = useAuth();
-  const navigate = useNavigate();
+  const [email, setEmail] = useState(''); //per gestire l'input dell'email dell'utente
+  const { isAuthenticated, role } = useAuth(); //controlla se l'utente è autenticato e il suo ruolo
+  const navigate = useNavigate(); //permette di navigare tra le pagine senza ricaricare
 
   // Stato per la gestione del pop-up
   const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    e.preventDefault(); //previene la ricarica della pagina quando viene chiamata handleSubmit, prima esegue l'azione (aprire la mail)
     window.location.href = `mailto:info@zencasaitalia.it?subject=Iscrizione Newsletter&body=Email: ${email}`;
   };
 
@@ -84,7 +84,7 @@ const Home = () => {
     },
   ];
 
-  const [openQuestionIndex, setOpenQuestionIndex] = useState(null);
+  const [openQuestionIndex, setOpenQuestionIndex] = useState(null); //controlla se la faq è aperta e quale
 
   const toggleAnswer = (index) => {
     setOpenQuestionIndex(openQuestionIndex === index ? null : index);

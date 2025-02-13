@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; //gestisce lo stato, recupera i dati dall'api al caricamento della pagina 
+//useEffect agisce al caricamento della pagina
 import {
   CatalogContainer,
   Sidebar,
@@ -22,7 +23,7 @@ import {
   Icon,
 } from '../styles/StyledComponents';
 import { PRODUCTS_URL } from '../data/api'; // URL delle API
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; //permette di navigare tra le pagine senza ricaricare
 
 const ProductsCatalog = () => {
   const [products, setProducts] = useState([]); // Stato per i prodotti
@@ -30,16 +31,17 @@ const ProductsCatalog = () => {
   const [error, setError] = useState(null); // Stato per eventuali errori
   const [selectedPriceRange, setSelectedPriceRange] = useState(null); // Filtro prezzo
   const [sortOption, setSortOption] = useState('I nostri preferiti'); // Ordinamento
+  const userId = sessionStorage.getItem("userId") || "guest";
   const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('cart');
+    const savedCart = sessionStorage.getItem(`cart_${userId}`);
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
-const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
-const handleProductClick = (product) => {
-  setSelectedProduct(product);
-};
+  const handleProductClick = (product) => {
+    setSelectedProduct(product);
+  };
 
 
   const navigate = useNavigate(); // Per navigare tra le pagine
@@ -78,19 +80,26 @@ const handleProductClick = (product) => {
 
   // Funzione per aggiungere al carrello
   const addToCart = (product) => {
-    const existingProduct = cart.find((item) => item.id === product.id);
-
-    if (existingProduct) {
-      const updatedCart = cart.map((item) =>
-        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-      );
-      setCart(updatedCart);
-      localStorage.setItem('cart', JSON.stringify(updatedCart));
-    } else {
-      const updatedCart = [...cart, { ...product, quantity: 1 }];
-      setCart(updatedCart);
-      localStorage.setItem('cart', JSON.stringify(updatedCart));
+    if (userId === "guest") {
+      alert("Devi essere loggato per aggiungere prodotti al carrello!");
+      return;
     }
+  
+    setCart((prevCart) => {
+      const existingProduct = prevCart.find((item) => item.id === product.id);
+      let updatedCart;
+  
+      if (existingProduct) {
+        updatedCart = prevCart.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      } else {
+        updatedCart = [...prevCart, { ...product, quantity: 1 }];
+      }
+  
+      sessionStorage.setItem(`cart_${userId}`, JSON.stringify(updatedCart));
+      return updatedCart;
+    });
   };
 
   const handlePriceRangeChange = (maxPrice) => {
