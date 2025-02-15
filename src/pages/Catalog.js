@@ -30,23 +30,24 @@ const ProductsCatalog = () => {
   const [loading, setLoading] = useState(true); // Stato di caricamento
   const [error, setError] = useState(null); // Stato per eventuali errori
   const [selectedPriceRange, setSelectedPriceRange] = useState(null); // Filtro prezzo
-  const [sortOption, setSortOption] = useState('I nostri preferiti'); // Ordinamento
-  const userId = sessionStorage.getItem("userId") || "guest";
+  const [sortOption, setSortOption] = useState('I nostri preferiti'); // operazione ordinamento Ordinamento
+  const userId = sessionStorage.getItem("userId") || "guest"; //recupera l'id dell'utente per la sessione (Fino al logout)
   const [cart, setCart] = useState(() => {
-    const savedCart = sessionStorage.getItem(`cart_${userId}`);
+    const savedCart = sessionStorage.getItem(`cart_${userId}`); //memorizza gli articoli nel carrello
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null); //prodotto selezionato per vederne i dettagli
 
   const handleProductClick = (product) => {
-    setSelectedProduct(product);
+    setSelectedProduct(product); //salva il prodotto selezionato, per mostrarne i dettagli
   };
 
 
   const navigate = useNavigate(); // Per navigare tra le pagine
 
-  // Recupera i prodotti da Strapi
+  // Recupera i prodotti da Strapi. 
+  //Se risponde correttamente salva i dati in products, altrimenti lo memorizza in error 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -88,20 +89,25 @@ const ProductsCatalog = () => {
     setCart((prevCart) => {
       const existingProduct = prevCart.find((item) => item.id === product.id);
       let updatedCart;
-  
+      
+      //se il prodotto è già esistente, aumenta la quantità
       if (existingProduct) {
         updatedCart = prevCart.map((item) =>
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
+      
+      //altrimenti lo aggiunge
       } else {
         updatedCart = [...prevCart, { ...product, quantity: 1 }];
       }
-  
+      
+      //il carrello viene salvato come sessione. Se vi è un logout, il carrello si svuota
       sessionStorage.setItem(`cart_${userId}`, JSON.stringify(updatedCart));
       return updatedCart;
     });
   };
 
+  //attiva/disattiva filtro
   const handlePriceRangeChange = (maxPrice) => {
     setSelectedPriceRange(maxPrice === selectedPriceRange ? null : maxPrice);
   };

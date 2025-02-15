@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../data/authContext';
+import React, { useEffect, useState } from 'react'; 
+import { useNavigate } from 'react-router-dom'; //permette di navigare fra le pagine senza ricaricare 
+import { useAuth } from '../data/authContext'; //controlla se l'utente è loggato e permette il logout
 import { API_URL } from '../data/api';
 
 // Stili già esistenti (lasciati per non compromettere la logica)
@@ -38,14 +38,14 @@ const User = () => {
   const { isAuthenticated, logout, role } = useAuth();
   const navigate = useNavigate();
 
-  const [userData, setUserData] = useState(null);
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [userData, setUserData] = useState(null); //salva le informazioni dell'utente
+  const [orders, setOrders] = useState([]); //contiene la lista degli ordini
+  const [loading, setLoading] = useState(true); //indica se i dati sono in fase di caricamento
+  const [error, setError] = useState(null); //memorizza eventuali errori
 
   // Stato per la modalità di editing
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({});
+  const [isEditing, setIsEditing] = useState(false); //se vero, l'utente sta modificando i dati
+  const [editData, setEditData] = useState({}); //contiene le informazioni aggiornate
 
   // Tabs dinamici: 'profile' | 'orders' | 'contacts'
   const [activeTab, setActiveTab] = useState('profile');
@@ -57,7 +57,7 @@ const User = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem('jwt');
+        const token = localStorage.getItem('jwt'); //viene recuperato il token di autenticazione
         if (!token) {
           throw new Error('Token non trovato. Accedi nuovamente.');
         }
@@ -73,7 +73,7 @@ const User = () => {
         }
         const meData = await meRes.json();
         setUserData(meData);
-        sessionStorage.setItem("userId", meData.id);
+        sessionStorage.setItem("userId", meData.id); //salva l'idUtente, serve per il carrello
 
         // Prepara i dati di edit con i campi modificabili
         setEditData({
@@ -111,6 +111,7 @@ const User = () => {
           },
         }));
 
+        //salva gli ordini
         setOrders(extractedOrders);
         setLoading(false);
       } catch (err) {
@@ -123,7 +124,7 @@ const User = () => {
     fetchUserData();
   }, []);
 
-  // Logout
+  // funzione Logout, rimuove il carrello
   const handleLogout = () => {
     sessionStorage.removeItem("userId");
     sessionStorage.removeItem(`cart_${userData.id}`);
@@ -183,6 +184,7 @@ const User = () => {
   };
 
   // Gestione input form
+  //e è l'evento, e.target.name il nome del campo, e.target.value il valore
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEditData({

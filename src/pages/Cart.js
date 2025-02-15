@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { loadStripe } from "@stripe/stripe-js";
+import React, { useState, useEffect } from "react"; //gestire lo stato e gli effetti collaterali
+import { useNavigate, useLocation } from "react-router-dom"; //useNavigate per la navigazione e useLocation per leggere i parametri dell'URL
+import { loadStripe } from "@stripe/stripe-js"; //inizializza stripe per i pagamenti online
 
 import {
   CartContainer,
@@ -30,7 +30,7 @@ import {
   StyledButton,
 } from "../styles/StyledComponents";
 
-import { fetchProducts } from "../data/api";
+import { fetchProducts } from "../data/api"; //funzione per recuperare i prodotti dal backend
 
 // Inizializza Stripe con la tua chiave pubblica
 const stripePromise = loadStripe(
@@ -38,10 +38,11 @@ const stripePromise = loadStripe(
 );
 
 const Cart = () => {
-  const [products, setProducts] = useState([]);
-  const [isCheckoutVisible, setIsCheckoutVisible] = useState(false);
+  const [products, setProducts] = useState([]); //memorizza i prodotti disponibili nel catalogo
+  const [isCheckoutVisible, setIsCheckoutVisible] = useState(false); //controlla se la sezione di checkout è disponibile
 
-  const userId = sessionStorage.getItem("userId") || "guest";
+  const userId = sessionStorage.getItem("userId") || "guest"; //recupera l'idUtente
+  //memorizza i prodotti nel carrello
   const [cart, setCart] = useState(() => {
     const savedCart = sessionStorage.getItem(`cart_${userId}`);
     return savedCart ? JSON.parse(savedCart) : [];
@@ -58,7 +59,7 @@ const Cart = () => {
 
 
   // Stati vari
-  const [paymentSuccess, setPaymentSuccess] = useState(false); // mostra pop-up
+  const [paymentSuccess, setPaymentSuccess] = useState(false); // mostra pop-up se il pagamento va a buon fine
   const [orderSaved, setOrderSaved] = useState(false); // evita salvataggi multipli
 
   // Soglie di spedizione e sconto
@@ -75,11 +76,11 @@ const Cart = () => {
   // ---------------------------------------------------
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const sessionId = searchParams.get("session_id");
+    const sessionId = searchParams.get("session_id"); //se viene trovato un session id, il pagamento è riuscito
 
     if (sessionId && !orderSaved) {
       setPaymentSuccess(true);
-      saveOrderToDatabase();
+      saveOrderToDatabase(); //salva l'ordine nel database
     }
   }, [location.search, orderSaved]);
 
@@ -96,6 +97,7 @@ const Cart = () => {
     getProducts();
   }, []);
 
+  //recupera le informazioni dell'utente, utile per la spedizione
   const fetchUserData = async () => {
     try {
       const userId = sessionStorage.getItem("userId"); // Assumiamo che l'ID sia salvato qui
@@ -136,7 +138,7 @@ const Cart = () => {
   const increaseQuantity = (documentId) => {
     const updatedCart = cart.map((item) =>
       item.documentId === documentId
-        ? { ...item, quantity: item.quantity + 1 }
+        ? { ...item, quantity: item.quantity + 1 } //aumenta la quantità
         : item
     );
     setCart(updatedCart);
@@ -147,7 +149,7 @@ const Cart = () => {
     const updatedCart = cart
       .map((item) =>
         item.documentId === documentId && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 }
+          ? { ...item, quantity: item.quantity - 1 } //diminuisce la quantità
           : item
       )
       .filter((item) => item.quantity > 0);
@@ -158,9 +160,10 @@ const Cart = () => {
   const removeFromCart = (documentId) => {
     const updatedCart = cart.filter((item) => item.documentId !== documentId);
     setCart(updatedCart);
-    sessionStorage.setItem(`cart_${userId}`, JSON.stringify(updatedCart));
+    sessionStorage.setItem(`cart_${userId}`, JSON.stringify(updatedCart)); //rimuove dal carrello
   };
 
+  //gestisce l'input nel formData
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -169,6 +172,7 @@ const Cart = () => {
     }));
   };
 
+  //possibile procedere al checkout se c'è almeno un prodotto
   const handleProceedToCheckout = () => {
     if (cart.length > 0) {
       setIsCheckoutVisible(true);
@@ -190,6 +194,7 @@ const Cart = () => {
   // ------------------------------------------------------
   const saveOrderToDatabase = async () => {
     // Struttura dati per Strapi (v4): { data: { ... } }
+    console.log("salvataggio");
     const orderData = {
       data: {
         customer: {
@@ -216,10 +221,9 @@ const Cart = () => {
     };
 
     try {
-      // Esempio: POST su ordine-prodottos?populate...
-      // Se la tua Strapi collection è configurata così
+      // POST su ordine-prodottos?populate...
       const response = await fetch(
-        "http://localhost:1337/ordine-prodottos?populate[cod_ordine][populate]=user&populate=cod_prodotto",
+        "http://localhost:1337/api/ordine-prodottos?populate[cod_ordine][populate]=user&populate=cod_prodotto",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
