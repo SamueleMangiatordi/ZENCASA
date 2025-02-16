@@ -1,10 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import {
-  API_URL,
-  PRODUCTS_URL,
-  USERS_URL,
-} from '../data/api';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { API_URL, PRODUCTS_URL, USERS_URL } from "../data/api";
 
 import {
   AdminContainer,
@@ -15,7 +11,7 @@ import {
   StatsCard,
   StatIcon,
   SidebarAvatar,
-} from '../styles/StyledAdminProfile';
+} from "../styles/StyledAdminProfile";
 
 import {
   CatalogContainer,
@@ -31,7 +27,7 @@ import {
   ProductPrice,
   AddToCartButton,
   ColorCircle,
-} from '../styles/StyledCatalog';
+} from "../styles/StyledCatalog";
 
 import {
   Banner,
@@ -39,81 +35,74 @@ import {
   Title,
   StyledButton,
   Icon,
-} from '../styles/StyledComponents';
+} from "../styles/StyledComponents";
 
 //import { StyledLink } from '../styles/StyledCatalog'; // Link personalizzato
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../data/authContext';
-
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../data/authContext";
 
 const AdminPage = () => {
-  
-const [showAddProductForm, setShowAddProductForm] = useState(false);
-const [newProductName, setNewProductName] = useState('');
-const [newProductPrice, setNewProductPrice] = useState('');
-const [newProductDescription, setNewProductDescription] = useState('');
-const [newProductQuantity, setNewProductQuantity] = useState('');
-const [activeSection, setActiveSection] = useState('statistiche');
-//const { isAdmin } = useAuth();
-const navigate = useNavigate();
-const [suppliers, setSuppliers] = useState(() => {
-  const savedSuppliers = localStorage.getItem('suppliers');
+  const [showAddProductForm, setShowAddProductForm] = useState(false);
+  const [newProductName, setNewProductName] = useState("");
+  const [newProductPrice, setNewProductPrice] = useState("");
+  const [newProductDescription, setNewProductDescription] = useState("");
+  const [newProductQuantity, setNewProductQuantity] = useState("");
+  const [activeSection, setActiveSection] = useState("statistiche");
+  //const { isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const [suppliers, setSuppliers] = useState(() => {
+    const savedSuppliers = localStorage.getItem("suppliers");
 
-  return savedSuppliers ? JSON.parse(savedSuppliers) : [];
-});
+    return savedSuppliers ? JSON.parse(savedSuppliers) : [];
+  });
 
-const {logout} = useAuth();
+  const { logout } = useAuth();
 
-
-  
-
-  
   const [showForm, setShowForm] = useState(false); // Per mostrare/nascondere il form
   const [newSupplier, setNewSupplier] = useState({
-    name: '',
-    link: '',
-    logo: '',
+    name: "",
+    link: "",
+    logo: "",
   });
 
   const [showDeleteForm, setShowDeleteForm] = useState(false); // Mostra/Nascondi il form di eliminazione
-  const [supplierToDelete, setSupplierToDelete] = useState(''); // Nome del fornitore da eliminare
+  const [supplierToDelete, setSupplierToDelete] = useState(""); // Nome del fornitore da eliminare
   const [openOrderDocumentIds, setOpenOrderDocumentIds] = useState([]); // Traccia i documentId aperti
-
 
   // Funzione per aggiungere un nuovo fornitore
   const handleAddSupplier = (e) => {
     e.preventDefault();
     if (!newSupplier.name || !newSupplier.link || !newSupplier.logo) {
-      alert('Tutti i campi sono obbligatori!');
+      alert("Tutti i campi sono obbligatori!");
       return;
     }
 
     const updatedSuppliers = [...suppliers, newSupplier];
     setSuppliers(updatedSuppliers);
-    localStorage.setItem('suppliers', JSON.stringify(updatedSuppliers));
+    localStorage.setItem("suppliers", JSON.stringify(updatedSuppliers));
 
-    setNewSupplier({ name: '', link: '', logo: '' }); // Resetta i campi del form
+    setNewSupplier({ name: "", link: "", logo: "" }); // Resetta i campi del form
     setShowForm(false); // Nasconde il form
   };
 
   // Logout
   const handleLogout = () => {
     logout();
-    setTimeout(() => navigate('/', { replace: true }), 100); // Aggiunge un leggero ritardo
+    setTimeout(() => navigate("/", { replace: true }), 100); // Aggiunge un leggero ritardo
   };
-
 
   const handleDeleteSupplier = (e) => {
     e.preventDefault();
     const updatedSuppliers = suppliers.filter(
-      (supplier) => supplier.name.toLowerCase() !== supplierToDelete.toLowerCase()
+      (supplier) =>
+        supplier.name.toLowerCase() !== supplierToDelete.toLowerCase()
     );
     setSuppliers(updatedSuppliers);
-    localStorage.setItem('suppliers', JSON.stringify(updatedSuppliers));
-    setSupplierToDelete(''); // Resetta il campo input
+    localStorage.setItem("suppliers", JSON.stringify(updatedSuppliers));
+    setSupplierToDelete(""); // Resetta il campo input
     setShowDeleteForm(false); // Nasconde il form
   };
-  
+
   // ----------------------------
   // SEZIONE STATISTICHE (stati)
   // ----------------------------
@@ -122,9 +111,7 @@ const {logout} = useAuth();
 
   const [orders, setOrders] = useState([]); // Stato per gli ordini
 
-const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricamento ordini
-
-
+  const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricamento ordini
 
   // Dati utenti
   const [users, setUsers] = useState([]);
@@ -134,10 +121,10 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
   // Fattura / contabilità
   const [annualRevenue] = useState(30000);
   const [paidAmount, setPaidAmount] = useState(() => {
-    const savedAmount = localStorage.getItem('paidAmount');
+    const savedAmount = localStorage.getItem("paidAmount");
     return savedAmount ? parseFloat(savedAmount) : 10000;
   });
-  const [newAmount, setNewAmount] = useState('');
+  const [newAmount, setNewAmount] = useState("");
 
   const coefficientRendita = 0.67;
   const aliquotaFiscale = 0.05;
@@ -146,7 +133,10 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
 
   const imponibile = annualRevenue * coefficientRendita;
   const tasse = imponibile * aliquotaFiscale;
-  const contributi = Math.max(imponibile * aliquotaContributi, sogliaMinimaContributi);
+  const contributi = Math.max(
+    imponibile * aliquotaContributi,
+    sogliaMinimaContributi
+  );
   const totaleDaPagare = tasse + contributi;
 
   // ----------------------------
@@ -155,55 +145,56 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [productsError, setProductsError] = useState(null);
-  const [editingQuantity, setEditingQuantity] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [editingQuantity, setEditingQuantity] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
-
-
- 
   // Stati per la modifica di un prodotto
   const [editingProductId, setEditingProductId] = useState(null);
-  const [editingName, setEditingName] = useState('');
-  const [editingPrice, setEditingPrice] = useState('');
-  const [editingDescription, setEditingDescription] = useState('');
+  const [editingName, setEditingName] = useState("");
+  const [editingPrice, setEditingPrice] = useState("");
+  const [editingDescription, setEditingDescription] = useState("");
   const [customers, setCustomers] = useState({});
 
   const toggleOrderDetails = (documentId) => {
-    setOpenOrderDocumentIds((prevState) =>
-      prevState.includes(documentId)
-        ? prevState.filter((id) => id !== documentId) // Rimuovi il documentId per chiudere
-        : [...prevState, documentId] // Aggiungi il documentId per aprire
+    setOpenOrderDocumentIds(
+      (prevState) =>
+        prevState.includes(documentId)
+          ? prevState.filter((id) => id !== documentId) // Rimuovi il documentId per chiudere
+          : [...prevState, documentId] // Aggiungi il documentId per aprire
     );
   };
   // ----------------------------
   // USEEFFECT
   // ----------------------------
   useEffect(() => {
-    // Se il token non è quello dell'admin, reindirizza alla home
-   
-    
     // Fetch ordini
     const fetchOrders = async () => {
       try {
-
-        const response = await axios.get(`${API_URL}/ordine-prodottos?populate[cod_ordine][populate]=user&populate=cod_prodotto`);
+        const response = await axios.get(
+          `${API_URL}/ordine-prodottos?populate[cod_ordine][populate]=user&populate=cod_prodotto`
+        );
         const allOrders = response.data.data || [];
-    
+
         // Recupera i dettagli dei clienti usando `documentId`
         const customerPromises = allOrders.map(async (order) => {
           const customerDocumentId = order.user?.documentId;
           if (customerDocumentId) {
             try {
-              const customerResponse = await axios.get(`${API_URL}/users/${customerDocumentId}`);
+              const customerResponse = await axios.get(
+                `${API_URL}/users/${customerDocumentId}`
+              );
               return { [customerDocumentId]: customerResponse.data };
             } catch (err) {
-              console.error(`Errore nel recupero dei dettagli del cliente con documentId ${customerDocumentId}:`, err);
+              console.error(
+                `Errore nel recupero dei dettagli del cliente con documentId ${customerDocumentId}:`,
+                err
+              );
               return null;
             }
           }
           return null;
         });
-    
+
         // Risolvi tutte le promesse dei clienti
         const customerResults = await Promise.all(customerPromises);
         const customersData = {};
@@ -212,43 +203,41 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
             Object.assign(customersData, result);
           }
         });
-    
+
         setOrders(allOrders); // Salva gli ordini nello stato
         setCustomers(customersData); // Salva i dati dei clienti nello stato
         setOrdersCount(allOrders.length);
       } catch (err) {
-        console.error('Errore nel recupero degli ordini:', err);
-        setOrderError('Non è stato possibile caricare gli ordini.');
+        console.error("Errore nel recupero degli ordini:", err);
+        setOrderError("Non è stato possibile caricare gli ordini.");
       }
     };
-    
 
-  
     // Fetch utenti
     const fetchUsers = async () => {
       try {
         const response = await axios.get(USERS_URL);
-        
+
         // Mappa solo i campi che ti interessano
         const formattedUsers = response.data.map((user) => ({
-          email: user.email || 'N/A',
-          nome: user.nome || 'N/A',
-          cognome: user.cognome || 'N/A',
-          indirizzo: user.indirizzo || 'N/A',
+          email: user.email || "N/A",
+          nome: user.nome || "N/A",
+          cognome: user.cognome || "N/A",
+          indirizzo: user.indirizzo || "N/A",
         }));
-        
+
         setUsers(formattedUsers); // Aggiorna lo stato con i dati filtrati
       } catch (err) {
-        console.error('Errore nel caricamento dei dati utenti:', err);
-        setError('Non è stato possibile caricare i dati degli utenti.');
+        console.error("Errore nel caricamento dei dati utenti:", err);
+        setError("Non è stato possibile caricare i dati degli utenti.");
       }
     };
-    
+
     const fetchProducts = async () => {
       try {
         const response = await axios.get(`${API_URL}/prodottis?populate=*`);
         const data = response.data;
-    
+
         const mappedProducts = data.data.map((product) => {
           const imageData = product.immagine_prodotto?.[0]?.formats || {};
           const imageUrl =
@@ -256,8 +245,8 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
             imageData.small?.url ||
             imageData.thumbnail?.url ||
             product.immagine_prodotto?.[0]?.url ||
-            '/default-image.jpg';
-    
+            "/default-image.jpg";
+
           return {
             documentId: product.documentId,
             name: product.nome_prodotto,
@@ -267,37 +256,35 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
             image: `http://localhost:1337${imageUrl}`,
           };
         });
-    
+
         setProducts(mappedProducts);
         setLoadingProducts(false);
       } catch (err) {
-        console.error('Errore caricamento prodotti:', err);
-        setProductsError('Impossibile recuperare i prodotti');
+        console.error("Errore caricamento prodotti:", err);
+        setProductsError("Impossibile recuperare i prodotti");
         setLoadingProducts(false);
       }
     };
-    
-  
+
     // Fetch prodotti
     fetchProducts();
-  
+
     fetchOrders();
     fetchUsers();
   }, []); //il reinderizzamento dipende dal valore di token
-  
 
   // ----------------------------
   // HANDLER: AGGIUNTA IMPORTO
   // ----------------------------
   const handleAddAmount = () => {
     if (isNaN(newAmount) || newAmount <= 0) {
-      alert('Inserisci un importo valido.');
+      alert("Inserisci un importo valido.");
       return;
     }
     const updatedAmount = paidAmount + parseFloat(newAmount);
     setPaidAmount(updatedAmount);
-    localStorage.setItem('paidAmount', updatedAmount.toFixed(2));
-    setNewAmount('');
+    localStorage.setItem("paidAmount", updatedAmount.toFixed(2));
+    setNewAmount("");
   };
 
   // ----------------------------
@@ -310,37 +297,39 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
     setEditingDescription(product.description); // Carica la descrizione
     setEditingQuantity(product.quantity);
   };
-  
+
   const cancelEditing = () => {
     setEditingProductId(null); // Annulla la modifica
-    setEditingName(''); // Resetta il nome
-    setEditingPrice(''); // Resetta il prezzo
-    setEditingDescription(''); // Resetta la descrizione
+    setEditingName(""); // Resetta il nome
+    setEditingPrice(""); // Resetta il prezzo
+    setEditingDescription(""); // Resetta la descrizione
   };
-  
-  
+
   const saveProduct = async () => {
-    console.log(localStorage.getItem('jwt'));
+    console.log(localStorage.getItem("jwt"));
     if (!editingName || !editingPrice) {
-      alert('Nome e Prezzo sono obbligatori!');
+      alert("Nome e Prezzo sono obbligatori!");
       return;
     }
-  
+
     try {
-      await axios.put(`${PRODUCTS_URL}/${editingProductId}`, {
-        data: {
-          nome_prodotto: editingName,
-          prezzo_unitario: parseFloat(editingPrice),
-          descrizione: editingDescription,
-          quantita_disponibili: parseInt(editingQuantity, 10),
+      await axios.put(
+        `${PRODUCTS_URL}/${editingProductId}`,
+        {
+          data: {
+            nome_prodotto: editingName,
+            prezzo_unitario: parseFloat(editingPrice),
+            descrizione: editingDescription,
+            quantita_disponibili: parseInt(editingQuantity, 10),
+          },
         },
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('jwt')}`,
-        },
-      });
-      
-  
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+          },
+        }
+      );
+
       // Aggiorna lo stato locale
       setProducts((prev) =>
         prev.map((product) =>
@@ -355,134 +344,130 @@ const [loadingOrders, setLoadingOrders] = useState(true); // Stato di caricament
             : product
         )
       );
-  
+
       cancelEditing();
-      alert('Prodotto modificato con successo!');
+      alert("Prodotto modificato con successo!");
     } catch (err) {
-      console.error('Errore durante la modifica:', err);
-      alert('Errore durante la modifica del prodotto.');
+      console.error("Errore durante la modifica:", err);
+      alert("Errore durante la modifica del prodotto.");
     }
   };
 
   // Funzione per aggiungere un nuovo prodotto
-const handleAddProduct = async (e) => {
-  e.preventDefault();
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
 
-  // Controlli di validità del form
-  if (!newProductName || !newProductPrice || !newProductQuantity) {
-    alert('Nome, Prezzo e Quantità sono obbligatori!');
-    return;
-  }
+    // Controlli di validità del form
+    if (!newProductName || !newProductPrice || !newProductQuantity) {
+      alert("Nome, Prezzo e Quantità sono obbligatori!");
+      return;
+    }
 
-  try {
-    // Chiama la API POST di Strapi
-    const response = await axios.post(
-      `${PRODUCTS_URL}`, 
-      {
-        data: {
-          nome_prodotto: newProductName,
-          prezzo_unitario: parseFloat(newProductPrice),
-          descrizione: newProductDescription,
-          quantita_disponibili: parseInt(newProductQuantity, 10),
+    try {
+      // Chiama la API POST di Strapi
+      const response = await axios.post(
+        `${PRODUCTS_URL}`,
+        {
+          data: {
+            nome_prodotto: newProductName,
+            prezzo_unitario: parseFloat(newProductPrice),
+            descrizione: newProductDescription,
+            quantita_disponibili: parseInt(newProductQuantity, 10),
+          },
         },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('jwt')}`,
-        },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+          },
+        }
+      );
 
-    // Se la chiamata va a buon fine, aggiorna lo stato "products" localmente
-    const createdProduct = response.data.data;
-    // Mappa il prodotto come fai per gli altri (per consistenza)
-    const imageUrl = '/default-image.jpg'; // O gestisci come preferisci
-    const mapped = {
-      documentId: createdProduct.id, // o "createdProduct.attributes.documentId" se usi quello
-      name: createdProduct.attributes.nome_prodotto,
-      description: createdProduct.attributes.descrizione,
-      price: createdProduct.attributes.prezzo_unitario,
-      quantity: createdProduct.attributes.quantita_disponibili,
-      image: `http://localhost:1337${imageUrl}`,
-    };
+      // Se la chiamata va a buon fine, aggiorna lo stato "products" localmente
+      const createdProduct = response.data.data;
+      // Mappa il prodotto
+      const imageUrl = "/default-image.jpg";
+      const mapped = {
+        documentId: createdProduct.id,
+        name: createdProduct.attributes.nome_prodotto,
+        description: createdProduct.attributes.descrizione,
+        price: createdProduct.attributes.prezzo_unitario,
+        quantity: createdProduct.attributes.quantita_disponibili,
+        image: `http://localhost:1337${imageUrl}`,
+      };
 
-    setProducts((prev) => [...prev, mapped]);
-    alert('Prodotto aggiunto con successo!');
-    
-    // Reset dei campi form e chiusura form
-    setNewProductName('');
-    setNewProductPrice('');
-    setNewProductDescription('');
-    setNewProductQuantity('');
-    setShowAddProductForm(false);
+      setProducts((prev) => [...prev, mapped]);
+      alert("Prodotto aggiunto con successo!");
 
-  } catch (err) {
-    console.error('Errore durante l\'aggiunta del prodotto:', err);
-    alert('Errore durante l\'aggiunta del prodotto.');
-  }
-};
-
-// Funzione per eliminare un prodotto
-const handleDeleteProduct = async (documentId) => {
-  try {
-    // Chiama la API DELETE
-    await axios.delete(`${PRODUCTS_URL}/${products.documentId}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('jwt')}`,
-      },
-    });
-    
-    // Rimuovi il prodotto dallo stato locale
-    setProducts((prev) => prev.filter((product) => product.documentId !== documentId));
-    alert('Prodotto eliminato con successo!');
-  } catch (err) {
-    console.error('Errore durante l\'eliminazione del prodotto:', err);
-    alert('Errore durante l\'eliminazione del prodotto.');
-  }
-};
-
-  
-
-  const toggleProductsVisibility = (documentId) => {
-    const productListDiv = document.getElementById(`product-list-${documentId}`);
-    if (!productListDiv) return;
-  
-    if (productListDiv.style.display === 'none' || !productListDiv.style.display) {
-      productListDiv.style.display = 'block';
-      productListDiv.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      productListDiv.style.display = 'none';
+      // Reset dei campi form e chiusura form
+      setNewProductName("");
+      setNewProductPrice("");
+      setNewProductDescription("");
+      setNewProductQuantity("");
+      setShowAddProductForm(false);
+    } catch (err) {
+      console.error("Errore durante l'aggiunta del prodotto:", err);
+      alert("Errore durante l'aggiunta del prodotto.");
     }
   };
-  
+
+  // Funzione per eliminare un prodotto
+  const handleDeleteProduct = async (documentId) => {
+    try {
+      // Chiama la API DELETE
+      await axios.delete(`${PRODUCTS_URL}/${products.documentId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+        },
+      });
+
+      // Rimuove il prodotto dallo stato locale
+      setProducts((prev) =>
+        prev.filter((product) => product.documentId !== documentId)
+      );
+      alert("Prodotto eliminato con successo!");
+    } catch (err) {
+      console.error("Errore durante l'eliminazione del prodotto:", err);
+      alert("Errore durante l'eliminazione del prodotto.");
+    }
+  };
+
+  const toggleProductsVisibility = (documentId) => {
+    const productListDiv = document.getElementById(
+      `product-list-${documentId}`
+    );
+    if (!productListDiv) return;
+
+    if (
+      productListDiv.style.display === "none" ||
+      !productListDiv.style.display
+    ) {
+      productListDiv.style.display = "block";
+      productListDiv.scrollIntoView({ behavior: "smooth" });
+    } else {
+      productListDiv.style.display = "none";
+    }
+  };
 
   // ----------------------------
   // Filtri e Ordinamento Prodotti
   // ----------------------------
   const priceRanges = [
-    { label: 'Fino a 20 euro', maxPrice: 20 },
-    { label: 'Fino a 50 euro', maxPrice: 50 },
-    { label: 'Fino a 100 euro', maxPrice: 100 },
+    { label: "Fino a 20 euro", maxPrice: 20 },
+    { label: "Fino a 50 euro", maxPrice: 50 },
+    { label: "Fino a 100 euro", maxPrice: 100 },
   ];
 
   const colors = [
-    { name: 'Beige', color: '#f5deb3' },
-    { name: 'Grigio', color: '#808080' },
-    { name: 'Bianco', color: '#ffffff' },
+    { name: "Beige", color: "#f5deb3" },
+    { name: "Grigio", color: "#808080" },
+    { name: "Bianco", color: "#ffffff" },
   ];
 
- 
-
-  const handleColorChange = (color) => {
-    
-  };
-
+  const handleColorChange = (color) => {};
 
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
-
 
   return (
     <>
@@ -490,9 +475,9 @@ const handleDeleteProduct = async (documentId) => {
       <Banner>Spedizione gratuita per ordini superiori a 50 euro</Banner>
 
       <Header>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
           <Title>Zencasa</Title>
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <nav style={{ display: "flex", alignItems: "center", gap: "15px" }}>
             <StyledButton to="/products">CATALOGO</StyledButton>
             <StyledButton
               as="a"
@@ -504,9 +489,12 @@ const handleDeleteProduct = async (documentId) => {
             </StyledButton>
           </nav>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
           <StyledButton to="/">HOME</StyledButton>
-          <StyledButton onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '20px'}}>
+          <StyledButton
+            onClick={handleLogout}
+            style={{ display: "flex", alignItems: "center", gap: "20px" }}
+          >
             LOGOUT
           </StyledButton>
         </div>
@@ -521,19 +509,19 @@ const handleDeleteProduct = async (documentId) => {
               alt="User Avatar"
             />
           </SidebarAvatar>
-          <SidebarItem onClick={() => setActiveSection('statistiche')}>
+          <SidebarItem onClick={() => setActiveSection("statistiche")}>
             Statistiche
           </SidebarItem>
-          <SidebarItem onClick={() => setActiveSection('gestisciUtenti')}>
+          <SidebarItem onClick={() => setActiveSection("gestisciUtenti")}>
             Gestisci Utenti
           </SidebarItem>
-          <SidebarItem onClick={() => setActiveSection('riferimentiFornitore')}>
+          <SidebarItem onClick={() => setActiveSection("riferimentiFornitore")}>
             Riferimenti Fornitore
           </SidebarItem>
-          <SidebarItem onClick={() => setActiveSection('prodotti')}>
+          <SidebarItem onClick={() => setActiveSection("prodotti")}>
             Prodotti
           </SidebarItem>
-          <SidebarItem onClick={() => setActiveSection('ordini')}>
+          <SidebarItem onClick={() => setActiveSection("ordini")}>
             Ordini
           </SidebarItem>
         </Sidebar>
@@ -541,7 +529,7 @@ const handleDeleteProduct = async (documentId) => {
         {/* Sezione principale */}
         <DashboardSection>
           {/* SEZIONE STATISTICHE */}
-          {activeSection === 'statistiche' && (
+          {activeSection === "statistiche" && (
             <>
               <h2>Statistiche</h2>
 
@@ -565,7 +553,8 @@ const handleDeleteProduct = async (documentId) => {
                     <h3>DA PAGARE</h3>
                     <p>{totaleDaPagare.toFixed(2)} €</p>
                     <small>
-                      (Tasse: {tasse.toFixed(2)} €, Contributi: {contributi.toFixed(2)} €)
+                      (Tasse: {tasse.toFixed(2)} €, Contributi:{" "}
+                      {contributi.toFixed(2)} €)
                     </small>
                   </div>
                 </StatsCard>
@@ -577,28 +566,28 @@ const handleDeleteProduct = async (documentId) => {
                   <div>
                     <h3>PAGATI</h3>
                     <p>{paidAmount.toFixed(2)} €</p>
-                    <div style={{ marginTop: '10px' }}>
+                    <div style={{ marginTop: "10px" }}>
                       <input
                         type="number"
                         placeholder="Inserisci importo"
                         value={newAmount}
                         onChange={(e) => setNewAmount(e.target.value)}
                         style={{
-                          padding: '5px',
-                          marginRight: '10px',
-                          border: '1px solid #ddd',
-                          borderRadius: '4px',
+                          padding: "5px",
+                          marginRight: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
                         }}
                       />
                       <button
                         onClick={handleAddAmount}
                         style={{
-                          padding: '5px 10px',
-                          backgroundColor: '#007BFF',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
+                          padding: "5px 10px",
+                          backgroundColor: "#007BFF",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "4px",
+                          cursor: "pointer",
                         }}
                       >
                         Aggiungi
@@ -610,132 +599,176 @@ const handleDeleteProduct = async (documentId) => {
 
               {/* Link utili */}
               <div
-  style={{
-    marginTop: '40px',
-    padding: '20px',
-    backgroundColor: '#f4f4f4',
-    borderRadius: '12px',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-  }}
->
-  <h2 style={{ marginBottom: '30px', textAlign: 'center', fontSize: '1.8rem', fontWeight: 'bold' }}>
-    Link Utili
-  </h2>
+                style={{
+                  marginTop: "40px",
+                  padding: "20px",
+                  backgroundColor: "#f4f4f4",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                }}
+              >
+                <h2
+                  style={{
+                    marginBottom: "30px",
+                    textAlign: "center",
+                    fontSize: "1.8rem",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Link Utili
+                </h2>
 
-  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-    {/* Card Singola */}
-    {[
-      {
-        name: 'Contatta Commercialista',
-        image: 'https://s3-eu-west-1.amazonaws.com/tpd/logos/5dbac1b87f0f6d0001b30a84/0x0.png',
-        link: 'https://app.fiscozen.it/app/dashboard',
-        bgColor: '#ffffff',
-      },
-      {
-        name: 'Amazon Seller Central',
-        image: 'https://cdn.prod.website-files.com/5e69023976612cc1b93073cf/65becff5a9d744382c737c80_amazonseller.png',
-        link: 'https://sellercentral.amazon.it/',
-        bgColor: '#ffffff',
-      },
-      {
-        name: 'SeoZoom',
-        image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcoilGjSKXsfBTwqiv3QETGsOvhzsKhl73_A&s',
-        link: 'https://www.seozoom.it/#ctrck=gads?sorgente=gads',
-        bgColor: '#ffffff',
-      },
-      {
-        name: 'Cassetto Fiscale',
-        image: 'https://upload.wikimedia.org/wikipedia/commons/5/5b/INPS_logo.png',
-        link: 'https://www.inps.it',
-        bgColor: '#ffffff',
-      },
-      {
-        name: 'Bartolini',
-        image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Logo_BRT.svg/2560px-Logo_BRT.svg.png',
-        link: 'https://services.brt.it/it/area-clienti',
-        bgColor: '#ffffff',
-      },
-    ].map((item, index) => (
-      <div
-        key={index}
-        style={{
-          backgroundColor: item.bgColor,
-          borderRadius: '12px',
-          padding: '20px',
-          textAlign: 'center',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-          cursor: 'pointer',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.05)';
-          e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-        }}
-      >
-        <img
-          src={item.image}
-          alt={item.name}
-          style={{
-            width: '100%',
-            height: '120px',
-            objectFit: 'contain',
-            marginBottom: '15px',
-          }}
-        />
-        <a
-          href={item.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            textDecoration: 'none',
-            color: '#007bff',
-            fontWeight: 'bold',
-            fontSize: '1rem',
-          }}
-        >
-          {item.name}
-        </a>
-      </div>
-    ))}
-  </div>
-</div>
-
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                    gap: "20px",
+                  }}
+                >
+                  {/* Card Singola */}
+                  {[
+                    {
+                      name: "Contatta Commercialista",
+                      image:
+                        "https://s3-eu-west-1.amazonaws.com/tpd/logos/5dbac1b87f0f6d0001b30a84/0x0.png",
+                      link: "https://app.fiscozen.it/app/dashboard",
+                      bgColor: "#ffffff",
+                    },
+                    {
+                      name: "Amazon Seller Central",
+                      image:
+                        "https://cdn.prod.website-files.com/5e69023976612cc1b93073cf/65becff5a9d744382c737c80_amazonseller.png",
+                      link: "https://sellercentral.amazon.it/",
+                      bgColor: "#ffffff",
+                    },
+                    {
+                      name: "SeoZoom",
+                      image:
+                        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcoilGjSKXsfBTwqiv3QETGsOvhzsKhl73_A&s",
+                      link: "https://www.seozoom.it/#ctrck=gads?sorgente=gads",
+                      bgColor: "#ffffff",
+                    },
+                    {
+                      name: "Cassetto Fiscale",
+                      image:
+                        "https://upload.wikimedia.org/wikipedia/commons/5/5b/INPS_logo.png",
+                      link: "https://www.inps.it",
+                      bgColor: "#ffffff",
+                    },
+                    {
+                      name: "Bartolini",
+                      image:
+                        "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Logo_BRT.svg/2560px-Logo_BRT.svg.png",
+                      link: "https://services.brt.it/it/area-clienti",
+                      bgColor: "#ffffff",
+                    },
+                  ].map((item, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        backgroundColor: item.bgColor,
+                        borderRadius: "12px",
+                        padding: "20px",
+                        textAlign: "center",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                        transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "scale(1.05)";
+                        e.currentTarget.style.boxShadow =
+                          "0 4px 16px rgba(0,0,0,0.2)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                        e.currentTarget.style.boxShadow =
+                          "0 2px 8px rgba(0,0,0,0.1)";
+                      }}
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        style={{
+                          width: "100%",
+                          height: "120px",
+                          objectFit: "contain",
+                          marginBottom: "15px",
+                        }}
+                      />
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          textDecoration: "none",
+                          color: "#007bff",
+                          fontWeight: "bold",
+                          fontSize: "1rem",
+                        }}
+                      >
+                        {item.name}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </>
           )}
 
           {/* SEZIONE GESTISCI UTENTI */}
-          {activeSection === 'gestisciUtenti' && (
+          {activeSection === "gestisciUtenti" && (
             <>
               <h2>Gestione Utenti</h2>
               {error ? (
-                <p style={{ color: 'red' }}>{error}</p>
+                <p style={{ color: "red" }}>{error}</p>
               ) : (
                 <table
                   style={{
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    backgroundColor: '#fff',
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    backgroundColor: "#fff",
                   }}
                 >
                   <thead>
-                    <tr style={{ backgroundColor: '#f5f5f5' }}>
-                      <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                    <tr style={{ backgroundColor: "#f5f5f5" }}>
+                      <th
+                        style={{
+                          padding: "10px",
+                          borderBottom: "1px solid #ddd",
+                        }}
+                      >
                         Nome
                       </th>
-                      <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                      <th
+                        style={{
+                          padding: "10px",
+                          borderBottom: "1px solid #ddd",
+                        }}
+                      >
                         Cognome
                       </th>
-                      <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                      <th
+                        style={{
+                          padding: "10px",
+                          borderBottom: "1px solid #ddd",
+                        }}
+                      >
                         Email
                       </th>
-                      <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                      <th
+                        style={{
+                          padding: "10px",
+                          borderBottom: "1px solid #ddd",
+                        }}
+                      >
                         Indirizzo
                       </th>
-                      <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                      <th
+                        style={{
+                          padding: "10px",
+                          borderBottom: "1px solid #ddd",
+                        }}
+                      >
                         Contatta Cliente
                       </th>
                     </tr>
@@ -743,32 +776,60 @@ const handleDeleteProduct = async (documentId) => {
                   <tbody>
                     {users.length === 0 ? (
                       <tr>
-                        <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
+                        <td
+                          colSpan="5"
+                          style={{ textAlign: "center", padding: "20px" }}
+                        >
                           Nessun utente trovato.
                         </td>
                       </tr>
                     ) : (
                       users.map((user) => (
                         <tr key={user.id}>
-                          <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                            {user.nome || 'N/A'}
+                          <td
+                            style={{
+                              padding: "10px",
+                              borderBottom: "1px solid #ddd",
+                            }}
+                          >
+                            {user.nome || "N/A"}
                           </td>
-                          <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                            {user.cognome || 'N/A'}
+                          <td
+                            style={{
+                              padding: "10px",
+                              borderBottom: "1px solid #ddd",
+                            }}
+                          >
+                            {user.cognome || "N/A"}
                           </td>
-                          <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                            {user.email || 'N/A'}
+                          <td
+                            style={{
+                              padding: "10px",
+                              borderBottom: "1px solid #ddd",
+                            }}
+                          >
+                            {user.email || "N/A"}
                           </td>
-                          <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                            {user.indirizzo || 'N/A'}
+                          <td
+                            style={{
+                              padding: "10px",
+                              borderBottom: "1px solid #ddd",
+                            }}
+                          >
+                            {user.indirizzo || "N/A"}
                           </td>
-                          <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
+                          <td
+                            style={{
+                              padding: "10px",
+                              borderBottom: "1px solid #ddd",
+                            }}
+                          >
                             <a
                               href={`mailto:${user.email}?subject=Richiesta%20informazioni&body=Ciao%20${user.nome},`}
                               style={{
-                                color: '#007BFF',
-                                textDecoration: 'underline',
-                                cursor: 'pointer',
+                                color: "#007BFF",
+                                textDecoration: "underline",
+                                cursor: "pointer",
                               }}
                             >
                               Invia Email a {user.email}
@@ -783,588 +844,773 @@ const handleDeleteProduct = async (documentId) => {
             </>
           )}
 
-          {activeSection === 'riferimentiFornitore' && (
-  <>
-  <>
-  <h2 style={{ textAlign: 'center', marginBottom: '30px', fontSize: '1.8rem', fontWeight: 'bold' }}>
-    Riferimenti Fornitore
-  </h2>
+          {activeSection === "riferimentiFornitore" && (
+            <>
+              <>
+                <h2
+                  style={{
+                    textAlign: "center",
+                    marginBottom: "30px",
+                    fontSize: "1.8rem",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Riferimenti Fornitore
+                </h2>
 
-  <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginBottom: '20px' }}>
-    <button
-      onClick={() => setShowForm(!showForm)}
-      style={{
-        padding: '10px 15px',
-        backgroundColor: '#007BFF',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        fontWeight: 'bold',
-      }}
-    >
-      Aggiungi Fornitore
-    </button>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "20px",
+                    justifyContent: "center",
+                    marginBottom: "20px",
+                  }}
+                >
+                  <button
+                    onClick={() => setShowForm(!showForm)}
+                    style={{
+                      padding: "10px 15px",
+                      backgroundColor: "#007BFF",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Aggiungi Fornitore
+                  </button>
 
-    <button
-      onClick={() => setShowDeleteForm(!showDeleteForm)}
-      style={{
-        padding: '10px 15px',
-        backgroundColor: '#FF0000',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        fontWeight: 'bold',
-      }}
-    >
-      Elimina Fornitore
-    </button>
-  </div>
+                  <button
+                    onClick={() => setShowDeleteForm(!showDeleteForm)}
+                    style={{
+                      padding: "10px 15px",
+                      backgroundColor: "#FF0000",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Elimina Fornitore
+                  </button>
+                </div>
 
-  {showForm && (
-    <form
-      onSubmit={handleAddSupplier}
-      style={{
-        marginBottom: '20px',
-        padding: '20px',
-        border: '1px solid #ddd',
-        borderRadius: '12px',
-        backgroundColor: '#f9f9f9',
-        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-      }}
-    >
-      <div style={{ marginBottom: '15px' }}>
-        <label>
-          Nome:
-          <input
-            type="text"
-            value={newSupplier.name}
-            onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
-            style={{ marginLeft: '10px', padding: '8px', width: '90%' }}
-          />
-        </label>
-      </div>
-      <div style={{ marginBottom: '15px' }}>
-        <label>
-          Link:
-          <input
-            type="text"
-            value={newSupplier.link}
-            onChange={(e) => setNewSupplier({ ...newSupplier, link: e.target.value })}
-            style={{ marginLeft: '10px', padding: '8px', width: '90%' }}
-          />
-        </label>
-      </div>
-      <div style={{ marginBottom: '15px' }}>
-        <label>
-          Logo:
-          <input
-            type="text"
-            value={newSupplier.logo}
-            onChange={(e) => setNewSupplier({ ...newSupplier, logo: e.target.value })}
-            style={{ marginLeft: '10px', padding: '8px', width: '90%' }}
-          />
-        </label>
-      </div>
-      <button
-        type="submit"
-        style={{
-          padding: '10px 15px',
-          backgroundColor: '#28a745',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          fontWeight: 'bold',
-        }}
-      >
-        Continua
-      </button>
-    </form>
-  )}
+                {showForm && (
+                  <form
+                    onSubmit={handleAddSupplier}
+                    style={{
+                      marginBottom: "20px",
+                      padding: "20px",
+                      border: "1px solid #ddd",
+                      borderRadius: "12px",
+                      backgroundColor: "#f9f9f9",
+                      boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    <div style={{ marginBottom: "15px" }}>
+                      <label>
+                        Nome:
+                        <input
+                          type="text"
+                          value={newSupplier.name}
+                          onChange={(e) =>
+                            setNewSupplier({
+                              ...newSupplier,
+                              name: e.target.value,
+                            })
+                          }
+                          style={{
+                            marginLeft: "10px",
+                            padding: "8px",
+                            width: "90%",
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <div style={{ marginBottom: "15px" }}>
+                      <label>
+                        Link:
+                        <input
+                          type="text"
+                          value={newSupplier.link}
+                          onChange={(e) =>
+                            setNewSupplier({
+                              ...newSupplier,
+                              link: e.target.value,
+                            })
+                          }
+                          style={{
+                            marginLeft: "10px",
+                            padding: "8px",
+                            width: "90%",
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <div style={{ marginBottom: "15px" }}>
+                      <label>
+                        Logo:
+                        <input
+                          type="text"
+                          value={newSupplier.logo}
+                          onChange={(e) =>
+                            setNewSupplier({
+                              ...newSupplier,
+                              logo: e.target.value,
+                            })
+                          }
+                          style={{
+                            marginLeft: "10px",
+                            padding: "8px",
+                            width: "90%",
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <button
+                      type="submit"
+                      style={{
+                        padding: "10px 15px",
+                        backgroundColor: "#28a745",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Continua
+                    </button>
+                  </form>
+                )}
 
-  {showDeleteForm && (
-    <form
-      onSubmit={handleDeleteSupplier}
-      style={{
-        marginBottom: '20px',
-        padding: '20px',
-        border: '1px solid #ddd',
-        borderRadius: '12px',
-        backgroundColor: '#f9f9f9',
-        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-      }}
-    >
-      <div style={{ marginBottom: '15px' }}>
-        <label>
-          Nome del Fornitore da Eliminare:
-          <input
-            type="text"
-            value={supplierToDelete}
-            onChange={(e) => setSupplierToDelete(e.target.value)}
-            style={{ marginLeft: '10px', padding: '8px', width: '90%' }}
-          />
-        </label>
-      </div>
-      <button
-        type="submit"
-        style={{
-          padding: '10px 15px',
-          backgroundColor: '#FF0000',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          fontWeight: 'bold',
-        }}
-      >
-        Elimina
-      </button>
-    </form>
-  )}
+                {showDeleteForm && (
+                  <form
+                    onSubmit={handleDeleteSupplier}
+                    style={{
+                      marginBottom: "20px",
+                      padding: "20px",
+                      border: "1px solid #ddd",
+                      borderRadius: "12px",
+                      backgroundColor: "#f9f9f9",
+                      boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    <div style={{ marginBottom: "15px" }}>
+                      <label>
+                        Nome del Fornitore da Eliminare:
+                        <input
+                          type="text"
+                          value={supplierToDelete}
+                          onChange={(e) => setSupplierToDelete(e.target.value)}
+                          style={{
+                            marginLeft: "10px",
+                            padding: "8px",
+                            width: "90%",
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <button
+                      type="submit"
+                      style={{
+                        padding: "10px 15px",
+                        backgroundColor: "#FF0000",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Elimina
+                    </button>
+                  </form>
+                )}
 
-  <div
-    style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-      gap: '20px',
-      marginTop: '20px',
-    }}
-  >
-    {[
-      {
-        name: 'Zentrada',
-        link: 'https://www.zentrada.com/it/',
-        logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBPz_hTPHnIVjjbli09Wvw00ACmOxDZcBT0g&s',
-      },
-      {
-        name: 'Donato Martinelli',
-        link: 'https://www.donatomartinelli.com/',
-        logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHpVv6B687OBwQXXlnla8j-yys92_Xj_Aheg&s',
-      },
-      {
-        name: 'Alibaba',
-        link: 'https://www.alibaba.com/',
-        logo: 'https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/alibaba-color.png',
-      },
-      {
-        name: 'GreenFoam',
-        link: 'https://www.greenfoam.it/',
-        logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTycJCDXOYYTPt753BudVG6V1W9cG7uKKX6TA&s',
-      },
-      ...suppliers,
-    ].map((supplier, index) => (
-      <div
-        key={index}
-        style={{
-          backgroundColor: '#fff',
-          borderRadius: '12px',
-          padding: '20px',
-          textAlign: 'center',
-          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.05)';
-          e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.2)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-        }}
-      >
-        <img
-          src={supplier.logo}
-          alt={`${supplier.name} logo`}
-          style={{
-            width: '100%',
-            height: '120px',
-            objectFit: 'contain',
-            marginBottom: '15px',
-          }}
-        />
-        <a
-          href={supplier.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            textDecoration: 'none',
-            color: '#007bff',
-            fontWeight: 'bold',
-            fontSize: '1rem',
-          }}
-        >
-          {supplier.name}
-        </a>
-      </div>
-    ))}
-  </div>
-</>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                    gap: "20px",
+                    marginTop: "20px",
+                  }}
+                >
+                  {[
+                    {
+                      name: "Zentrada",
+                      link: "https://www.zentrada.com/it/",
+                      logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBPz_hTPHnIVjjbli09Wvw00ACmOxDZcBT0g&s",
+                    },
+                    {
+                      name: "Donato Martinelli",
+                      link: "https://www.donatomartinelli.com/",
+                      logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHpVv6B687OBwQXXlnla8j-yys92_Xj_Aheg&s",
+                    },
+                    {
+                      name: "Alibaba",
+                      link: "https://www.alibaba.com/",
+                      logo: "https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/alibaba-color.png",
+                    },
+                    {
+                      name: "GreenFoam",
+                      link: "https://www.greenfoam.it/",
+                      logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTycJCDXOYYTPt753BudVG6V1W9cG7uKKX6TA&s",
+                    },
+                    ...suppliers,
+                  ].map((supplier, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        backgroundColor: "#fff",
+                        borderRadius: "12px",
+                        padding: "20px",
+                        textAlign: "center",
+                        boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                        transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "scale(1.05)";
+                        e.currentTarget.style.boxShadow =
+                          "0 6px 12px rgba(0,0,0,0.2)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                        e.currentTarget.style.boxShadow =
+                          "0 4px 8px rgba(0,0,0,0.1)";
+                      }}
+                    >
+                      <img
+                        src={supplier.logo}
+                        alt={`${supplier.name} logo`}
+                        style={{
+                          width: "100%",
+                          height: "120px",
+                          objectFit: "contain",
+                          marginBottom: "15px",
+                        }}
+                      />
+                      <a
+                        href={supplier.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          textDecoration: "none",
+                          color: "#007bff",
+                          fontWeight: "bold",
+                          fontSize: "1rem",
+                        }}
+                      >
+                        {supplier.name}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </>
+            </>
+          )}
 
-  </>
-)}
-
-
-      
           {/* SEZIONE PRODOTTI */}
-          {activeSection === 'prodotti' && (
-  <>
-    <h2>Gestione Prodotti</h2>
+          {activeSection === "prodotti" && (
+            <>
+              <h2>Gestione Prodotti</h2>
 
-    {loadingProducts && <p>Caricamento dei prodotti...</p>}
-    {productsError && <p style={{ color: 'red' }}>{productsError}</p>}
+              {loadingProducts && <p>Caricamento dei prodotti...</p>}
+              {productsError && <p style={{ color: "red" }}>{productsError}</p>}
 
-    {/* Bottone per mostrare/nascondere il form di aggiunta prodotto */}
-    {!loadingProducts && !productsError && (
-      <div style={{ marginBottom: '20px' }}>
-        <button
-          onClick={() => setShowAddProductForm(!showAddProductForm)}
-          style={{
-            padding: '10px 15px',
-            backgroundColor: '#28a745',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-          }}
-        >
-          {showAddProductForm ? 'Chiudi Form' : 'Aggiungi Prodotto'}
-        </button>
-      </div>
-    )}
+              {/* Bottone per mostrare/nascondere il form di aggiunta prodotto */}
+              {!loadingProducts && !productsError && (
+                <div style={{ marginBottom: "20px" }}>
+                  <button
+                    onClick={() => setShowAddProductForm(!showAddProductForm)}
+                    style={{
+                      padding: "10px 15px",
+                      backgroundColor: "#28a745",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {showAddProductForm ? "Chiudi Form" : "Aggiungi Prodotto"}
+                  </button>
+                </div>
+              )}
 
-    {/* Form di aggiunta prodotto */}
-    {showAddProductForm && (
-      <form onSubmit={handleAddProduct} style={{ marginBottom: '20px' }}>
-        <div style={{ marginBottom: '10px' }}>
-          <label>Nome Prodotto:</label>
-          <input
-            type="text"
-            value={newProductName}
-            onChange={(e) => setNewProductName(e.target.value)}
-            style={{ marginLeft: '10px', padding: '5px', width: '70%' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '10px' }}>
-          <label>Prezzo:</label>
-          <input
-            type="number"
-            step="0.01"
-            value={newProductPrice}
-            onChange={(e) => setNewProductPrice(e.target.value)}
-            style={{ marginLeft: '10px', padding: '5px', width: '70%' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '10px' }}>
-          <label>Descrizione:</label>
-          <textarea
-            value={newProductDescription}
-            onChange={(e) => setNewProductDescription(e.target.value)}
-            style={{ marginLeft: '10px', padding: '5px', width: '70%' }}
-            rows="3"
-          />
-        </div>
-
-        <div style={{ marginBottom: '10px' }}>
-          <label>Quantità Disponibili:</label>
-          <input
-            type="number"
-            value={newProductQuantity}
-            onChange={(e) => setNewProductQuantity(e.target.value)}
-            style={{ marginLeft: '10px', padding: '5px', width: '70%' }}
-          />
-        </div>
-
-        <button
-          type="submit"
-          style={{
-            padding: '6px 12px',
-            backgroundColor: '#007bff',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
-          Salva Prodotto
-        </button>
-      </form>
-    )}
-
-    {!loadingProducts && !productsError && (
-      <CatalogContainer style={{ marginTop: '20px' }}>
-        <MainContent>
-          <div style={{ marginBottom: '20px' }}>
-            <input
-              type="text"
-              placeholder="Cerca prodotto..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <span>{filteredProducts.length} Prodotti trovati</span>
-          </div>
-
-          <ProductGrid>
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id || product.documentId}>
-
-                <ProductImage src={product.image} alt={product.name} />
-                
-                {editingProductId === product.documentId ? (
-                  <>
-                    {/* Modifica del prodotto */}
+              {/* Form di aggiunta prodotto */}
+              {showAddProductForm && (
+                <form
+                  onSubmit={handleAddProduct}
+                  style={{ marginBottom: "20px" }}
+                >
+                  <div style={{ marginBottom: "10px" }}>
+                    <label>Nome Prodotto:</label>
                     <input
                       type="text"
-                      value={editingName}
-                      onChange={(e) => setEditingName(e.target.value)}
-                      placeholder="Nome prodotto"
-                      style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
+                      value={newProductName}
+                      onChange={(e) => setNewProductName(e.target.value)}
+                      style={{
+                        marginLeft: "10px",
+                        padding: "5px",
+                        width: "70%",
+                      }}
                     />
+                  </div>
+
+                  <div style={{ marginBottom: "10px" }}>
+                    <label>Prezzo:</label>
                     <input
                       type="number"
-                      value={editingPrice}
-                      onChange={(e) => setEditingPrice(e.target.value)}
-                      placeholder="Prezzo"
-                      style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
+                      step="0.01"
+                      value={newProductPrice}
+                      onChange={(e) => setNewProductPrice(e.target.value)}
+                      style={{
+                        marginLeft: "10px",
+                        padding: "5px",
+                        width: "70%",
+                      }}
                     />
+                  </div>
+
+                  <div style={{ marginBottom: "10px" }}>
+                    <label>Descrizione:</label>
                     <textarea
-                      value={editingDescription}
-                      onChange={(e) => setEditingDescription(e.target.value)}
-                      placeholder="Descrizione"
+                      value={newProductDescription}
+                      onChange={(e) => setNewProductDescription(e.target.value)}
+                      style={{
+                        marginLeft: "10px",
+                        padding: "5px",
+                        width: "70%",
+                      }}
                       rows="3"
-                      style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
                     />
+                  </div>
+
+                  <div style={{ marginBottom: "10px" }}>
+                    <label>Quantità Disponibili:</label>
                     <input
                       type="number"
-                      value={editingQuantity}
-                      onChange={(e) => setEditingQuantity(e.target.value)}
-                      placeholder="Quantità Disponibili"
-                      style={{ marginBottom: '10px', padding: '5px', width: '90%' }}
+                      value={newProductQuantity}
+                      onChange={(e) => setNewProductQuantity(e.target.value)}
+                      style={{
+                        marginLeft: "10px",
+                        padding: "5px",
+                        width: "70%",
+                      }}
                     />
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button
-                        onClick={saveProduct}
-                        style={{
-                          padding: '5px 10px',
-                          backgroundColor: '#28a745',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Salva
-                      </button>
-                      <button
-                        onClick={cancelEditing}
-                        style={{
-                          padding: '5px 10px',
-                          backgroundColor: '#dc3545',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Annulla
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {/* Visualizzazione normale del prodotto */}
-                    <ProductName>{product.name}</ProductName>
-                    <ProductPrice>{`€${product.price.toFixed(2)}`}</ProductPrice>
-                    <p>Quantità: {product.quantity}</p>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        onClick={() => startEditing(product)}
-                        style={{
-                          padding: '5px 10px',
-                          backgroundColor: '#007bff',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Modifica
-                      </button>
-                      {/* Bottone per l'eliminazione del prodotto */}
-                      <button
-                        onClick={() => handleDeleteProduct(product.documentId)}
-                        style={{
-                          padding: '5px 10px',
-                          backgroundColor: '#dc3545',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Elimina
-                      </button>
-                    </div>
-                  </>
-                )}
-              </ProductCard>
-            ))}
-          </ProductGrid>
-        </MainContent>
-      </CatalogContainer>
-    )}
-  </>
-)}
+                  </div>
 
+                  <button
+                    type="submit"
+                    style={{
+                      padding: "6px 12px",
+                      backgroundColor: "#007bff",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Salva Prodotto
+                  </button>
+                </form>
+              )}
 
+              {!loadingProducts && !productsError && (
+                <CatalogContainer style={{ marginTop: "20px" }}>
+                  <MainContent>
+                    <div style={{ marginBottom: "20px" }}>
+                      <input
+                        type="text"
+                        placeholder="Cerca prodotto..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ marginBottom: "20px" }}>
+                      <span>{filteredProducts.length} Prodotti trovati</span>
+                    </div>
+
+                    <ProductGrid>
+                      {filteredProducts.map((product) => (
+                        <ProductCard key={product.id || product.documentId}>
+                          <ProductImage
+                            src={product.image}
+                            alt={product.name}
+                          />
+
+                          {editingProductId === product.documentId ? (
+                            <>
+                              {/* Modifica del prodotto */}
+                              <input
+                                type="text"
+                                value={editingName}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                placeholder="Nome prodotto"
+                                style={{
+                                  marginBottom: "10px",
+                                  padding: "5px",
+                                  width: "90%",
+                                }}
+                              />
+                              <input
+                                type="number"
+                                value={editingPrice}
+                                onChange={(e) =>
+                                  setEditingPrice(e.target.value)
+                                }
+                                placeholder="Prezzo"
+                                style={{
+                                  marginBottom: "10px",
+                                  padding: "5px",
+                                  width: "90%",
+                                }}
+                              />
+                              <textarea
+                                value={editingDescription}
+                                onChange={(e) =>
+                                  setEditingDescription(e.target.value)
+                                }
+                                placeholder="Descrizione"
+                                rows="3"
+                                style={{
+                                  marginBottom: "10px",
+                                  padding: "5px",
+                                  width: "90%",
+                                }}
+                              />
+                              <input
+                                type="number"
+                                value={editingQuantity}
+                                onChange={(e) =>
+                                  setEditingQuantity(e.target.value)
+                                }
+                                placeholder="Quantità Disponibili"
+                                style={{
+                                  marginBottom: "10px",
+                                  padding: "5px",
+                                  width: "90%",
+                                }}
+                              />
+                              <div style={{ display: "flex", gap: "10px" }}>
+                                <button
+                                  onClick={saveProduct}
+                                  style={{
+                                    padding: "5px 10px",
+                                    backgroundColor: "#28a745",
+                                    color: "#fff",
+                                    border: "none",
+                                    borderRadius: "4px",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Salva
+                                </button>
+                                <button
+                                  onClick={cancelEditing}
+                                  style={{
+                                    padding: "5px 10px",
+                                    backgroundColor: "#dc3545",
+                                    color: "#fff",
+                                    border: "none",
+                                    borderRadius: "4px",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Annulla
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              {/* Visualizzazione normale del prodotto */}
+                              <ProductName>{product.name}</ProductName>
+                              <ProductPrice>{`€${product.price.toFixed(
+                                2
+                              )}`}</ProductPrice>
+                              <p>Quantità: {product.quantity}</p>
+                              <div style={{ display: "flex", gap: "8px" }}>
+                                <button
+                                  onClick={() => startEditing(product)}
+                                  style={{
+                                    padding: "5px 10px",
+                                    backgroundColor: "#007bff",
+                                    color: "#fff",
+                                    border: "none",
+                                    borderRadius: "4px",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Modifica
+                                </button>
+                                {/* Bottone per l'eliminazione del prodotto */}
+                                <button
+                                  onClick={() =>
+                                    handleDeleteProduct(product.documentId)
+                                  }
+                                  style={{
+                                    padding: "5px 10px",
+                                    backgroundColor: "#dc3545",
+                                    color: "#fff",
+                                    border: "none",
+                                    borderRadius: "4px",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Elimina
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </ProductCard>
+                      ))}
+                    </ProductGrid>
+                  </MainContent>
+                </CatalogContainer>
+              )}
+            </>
+          )}
 
           {/* SEZIONE ORDINI */}
-          
-          {activeSection === 'ordini' && (
-  <>
-    <h2>Gestione Ordini</h2>
-    {orderError ? (
-      <p style={{ color: 'red' }}>{orderError}</p>
-    ) : (
-      <div style={{ marginTop: '20px' }}>
-        {orders.length > 0 ? (
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              backgroundColor: '#fff',
-              marginBottom: '20px',
-            }}
-          >
-            <thead>
-              <tr style={{ backgroundColor: '#f5f5f5', textAlign: 'left' }}>
-                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Ordine ID</th>
-                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Data</th>
-                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Stato</th>
-                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Prezzo Totale</th>
-                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Cliente</th>
-                <th style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>Azioni</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => {
-                const ordine = order.cod_ordine || {};
-                const user = ordine.user || {};
-                const prodotto = order.cod_prodotto || {};
-                const isOpen = openOrderDocumentIds.includes(ordine.documentId); // Controlla se il gruppo è aperto
-                // Funzione per copiare i dati negli appunti
-                const copyOrderDetails = () => {
-                  const textToCopy = `
-                    Document ID: ${ordine.documentId || 'N/A'}
-                    Nome Prodotto: ${prodotto.nome_prodotto || 'N/A'}
-                    Nome Cliente: ${user.nome || 'N/A'}
-                    Cognome Cliente: ${user.cognome || 'N/A'}
-                    Indirizzo Cliente: ${user.indirizzo || 'N/A'}
+
+          {activeSection === "ordini" && (
+            <>
+              <h2>Gestione Ordini</h2>
+              {orderError ? (
+                <p style={{ color: "red" }}>{orderError}</p>
+              ) : (
+                <div style={{ marginTop: "20px" }}>
+                  {orders.length > 0 ? (
+                    <table
+                      style={{
+                        width: "100%",
+                        borderCollapse: "collapse",
+                        backgroundColor: "#fff",
+                        marginBottom: "20px",
+                      }}
+                    >
+                      <thead>
+                        <tr
+                          style={{
+                            backgroundColor: "#f5f5f5",
+                            textAlign: "left",
+                          }}
+                        >
+                          <th
+                            style={{
+                              padding: "10px",
+                              borderBottom: "1px solid #ddd",
+                            }}
+                          >
+                            Ordine ID
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px",
+                              borderBottom: "1px solid #ddd",
+                            }}
+                          >
+                            Data
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px",
+                              borderBottom: "1px solid #ddd",
+                            }}
+                          >
+                            Stato
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px",
+                              borderBottom: "1px solid #ddd",
+                            }}
+                          >
+                            Prezzo Totale
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px",
+                              borderBottom: "1px solid #ddd",
+                            }}
+                          >
+                            Cliente
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px",
+                              borderBottom: "1px solid #ddd",
+                            }}
+                          >
+                            Azioni
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orders.map((order) => {
+                          const ordine = order.cod_ordine || {};
+                          const user = ordine.user || {};
+                          const prodotto = order.cod_prodotto || {};
+                          const isOpen = openOrderDocumentIds.includes(
+                            ordine.documentId
+                          ); // Controlla se il gruppo è aperto
+                          // Funzione per copiare i dati negli appunti
+                          const copyOrderDetails = () => {
+                            const textToCopy = `
+                    Document ID: ${ordine.documentId || "N/A"}
+                    Nome Prodotto: ${prodotto.nome_prodotto || "N/A"}
+                    Nome Cliente: ${user.nome || "N/A"}
+                    Cognome Cliente: ${user.cognome || "N/A"}
+                    Indirizzo Cliente: ${user.indirizzo || "N/A"}
                   `;
-                  navigator.clipboard.writeText(textToCopy.trim());
-                  alert('Dettagli copiati negli appunti!');
-                };
+                            navigator.clipboard.writeText(textToCopy.trim());
+                            alert("Dettagli copiati negli appunti!");
+                          };
 
-                return (
-                  <React.Fragment key={ordine.id}>
-                    <tr>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                        {ordine.documentId || 'N/A'}
-                      </td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                        {ordine.data ? new Date(ordine.data).toLocaleDateString() : 'N/A'}
-                      </td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                        {ordine.stato || 'N/A'}
-                      </td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                        {ordine.prezzo_totale ? `€${ordine.prezzo_totale.toFixed(2)}` : 'N/A'}
-                      </td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                        {user.email || 'N/A'}
-                      </td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
-                        <button
-                          onClick={() => toggleOrderDetails(ordine.documentId)}
-                          style={{
-                            padding: '5px 10px',
-                            backgroundColor: '#007bff',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {isOpen ? '▲ Nascondi' : '▼ Mostra'}
-                        </button>
-                        <button
-                          onClick={copyOrderDetails}
-                          style={{
-                            padding: '5px 10px',
-                            backgroundColor: '#28a745',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Copia Dati
-                        </button>
-                      </td>
-                    </tr>
-                    {isOpen && (
-                      <tr>
-                        <td colSpan="6" style={{ backgroundColor: '#f9f9f9', padding: '10px' }}>
-                          <div>
-                            <p>
-                              <strong>Nome:</strong> {user.nome || 'N/A'}
-                            </p>
-                            <p>
-                              <strong>Cognome:</strong> {user.cognome || 'N/A'}
-                            </p>
-                            <p>
-                              <strong>Indirizzo:</strong> {user.indirizzo || 'N/A'}
-                            </p>
-                            <p>
-                              <strong>Prodotto:</strong> {order.cod_prodotto?.nome_prodotto || 'N/A'}
-                            </p>
-                            <p>
-                              <strong>Prezzo Unitario:</strong>{' '}
-                              {order.cod_prodotto?.prezzo_unitario
-                                ? `€${order.cod_prodotto.prezzo_unitario.toFixed(2)}`
-                                : 'N/A'}
-                            </p>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        ) : (
-          <p>Nessun ordine trovato.</p>
-        )}
-      </div>
-    )}
-  </>
-)}
-
-
+                          return (
+                            <React.Fragment key={ordine.id}>
+                              <tr>
+                                <td
+                                  style={{
+                                    padding: "10px",
+                                    borderBottom: "1px solid #ddd",
+                                  }}
+                                >
+                                  {ordine.documentId || "N/A"}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "10px",
+                                    borderBottom: "1px solid #ddd",
+                                  }}
+                                >
+                                  {ordine.data
+                                    ? new Date(ordine.data).toLocaleDateString()
+                                    : "N/A"}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "10px",
+                                    borderBottom: "1px solid #ddd",
+                                  }}
+                                >
+                                  {ordine.stato || "N/A"}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "10px",
+                                    borderBottom: "1px solid #ddd",
+                                  }}
+                                >
+                                  {ordine.prezzo_totale
+                                    ? `€${ordine.prezzo_totale.toFixed(2)}`
+                                    : "N/A"}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "10px",
+                                    borderBottom: "1px solid #ddd",
+                                  }}
+                                >
+                                  {user.email || "N/A"}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "10px",
+                                    borderBottom: "1px solid #ddd",
+                                  }}
+                                >
+                                  <button
+                                    onClick={() =>
+                                      toggleOrderDetails(ordine.documentId)
+                                    }
+                                    style={{
+                                      padding: "5px 10px",
+                                      backgroundColor: "#007bff",
+                                      color: "#fff",
+                                      border: "none",
+                                      borderRadius: "4px",
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    {isOpen ? "▲ Nascondi" : "▼ Mostra"}
+                                  </button>
+                                  <button
+                                    onClick={copyOrderDetails}
+                                    style={{
+                                      padding: "5px 10px",
+                                      backgroundColor: "#28a745",
+                                      color: "#fff",
+                                      border: "none",
+                                      borderRadius: "4px",
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    Copia Dati
+                                  </button>
+                                </td>
+                              </tr>
+                              {isOpen && (
+                                <tr>
+                                  <td
+                                    colSpan="6"
+                                    style={{
+                                      backgroundColor: "#f9f9f9",
+                                      padding: "10px",
+                                    }}
+                                  >
+                                    <div>
+                                      <p>
+                                        <strong>Nome:</strong>{" "}
+                                        {user.nome || "N/A"}
+                                      </p>
+                                      <p>
+                                        <strong>Cognome:</strong>{" "}
+                                        {user.cognome || "N/A"}
+                                      </p>
+                                      <p>
+                                        <strong>Indirizzo:</strong>{" "}
+                                        {user.indirizzo || "N/A"}
+                                      </p>
+                                      <p>
+                                        <strong>Prodotto:</strong>{" "}
+                                        {order.cod_prodotto?.nome_prodotto ||
+                                          "N/A"}
+                                      </p>
+                                      <p>
+                                        <strong>Prezzo Unitario:</strong>{" "}
+                                        {order.cod_prodotto?.prezzo_unitario
+                                          ? `€${order.cod_prodotto.prezzo_unitario.toFixed(
+                                              2
+                                            )}`
+                                          : "N/A"}
+                                      </p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <p>Nessun ordine trovato.</p>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </DashboardSection>
       </AdminContainer>
     </>

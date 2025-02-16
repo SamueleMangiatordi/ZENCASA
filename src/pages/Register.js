@@ -43,8 +43,8 @@ const Register = () => {
       }
 
       const data = await response.json();
-      localStorage.setItem('jwt', data.jwt); // Store the token
-      navigate('/completa-profilo'); // Redirect to complete profile page
+      localStorage.setItem('jwt', data.jwt); // Memorizza il token
+      navigate('/completa-profilo'); // Reindirizza alla pagina per completare il profilo
     } catch (error) {
       console.error('Error registering user:', error);
     }

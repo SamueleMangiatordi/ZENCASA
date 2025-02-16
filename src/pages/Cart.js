@@ -194,7 +194,6 @@ const Cart = () => {
   // ------------------------------------------------------
   const saveOrderToDatabase = async () => {
     // Struttura dati per Strapi (v4): { data: { ... } }
-    console.log("salvataggio");
     const orderData = {
       data: {
         customer: {

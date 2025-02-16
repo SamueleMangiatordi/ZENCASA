@@ -67,11 +67,11 @@ const CompletaProfilo = () => {
         body: JSON.stringify(userData),
       });
     if (response.ok) {
-      // Redirect to a success page or home
+      //Reinderizza alla home
       console.log('Profilo aggiornato con successo.');
       navigate('/');
     } else {
-      // Handle error
+      //Gestisce l'errore
       const errorData = await response.json();
       
       console.error('Profile update failed:', errorData);

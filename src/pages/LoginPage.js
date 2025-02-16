@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Importa Link
-import { useAuth } from '../data/authContext';
+import { Link, useNavigate } from 'react-router-dom'; // Importa Link per la pagina di registrazione
+import { useAuth } from '../data/authContext'; //fornisce il contesto di autenticazione
 import { API_URL } from '../data/api';
 
 import {
@@ -17,16 +17,16 @@ import {
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
-    identifier: '', // This can be username or email
+    identifier: '', // username o email
     password: '',
   });
 
   const [error, setError] = useState(null); // Per gestire errori
   const [loading, setLoading] = useState(false); // Per gestire lo stato di caricamento
   const navigate = useNavigate(); // Hook per navigazione
-  const { login } = useAuth();
+  const { login } = useAuth(); //funzione di useAuth per l'autenticazione
 
-
+  //permette di gestire il cambiamento nell'input
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -35,11 +35,13 @@ const LoginPage = () => {
     }));
   };
 
+  //eseguito dopo aver cliccato "login"
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null); // Resetta eventuali errori
 
+    //i dati vengono inviati all'API
     try {
       const response = await fetch(`${API_URL}/auth/local`, {
         method: 'POST',
@@ -49,6 +51,7 @@ const LoginPage = () => {
         body: JSON.stringify(formData),
       });
 
+      //gestisce l'errore
       if (!response.ok) {
         if (response.status === 400) {
           setError('Credenziali non valide. Riprova.'); // Mostra errore se 400 (Bad Request)
@@ -59,7 +62,7 @@ const LoginPage = () => {
       }
 
       const data = await response.json();
-      // Controlla se l'utente autenticato Ã¨ un admin
+      // Controlla il ruolo dell'utente autenticato 
       const userResponse = await fetch(`${API_URL}/users/me?populate=role`, {
         method: 'GET',
         headers: {
