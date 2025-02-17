@@ -43,13 +43,13 @@ import {
   ContactTitle,
   ContactInfo,
   WhatsAppButton,
-  StoryButton
+  StoryButton,
 } from "../styles/StyledComponents";
-import { useAuth } from '../data/authContext'; //recupera stato di autenticazione
+import { useAuth } from "../data/authContext"; //recupera stato di autenticazione
 import { useNavigate } from "react-router-dom"; //per la navigazione dinamica fra le pagine
 
 const Home = () => {
-  const [email, setEmail] = useState(''); //per gestire l'input dell'email dell'utente
+  const [email, setEmail] = useState(""); //per gestire l'input dell'email dell'utente
   const { isAuthenticated, role } = useAuth(); //controlla se l'utente è autenticato e il suo ruolo
   const navigate = useNavigate(); //permette di navigare tra le pagine senza ricaricare
 
@@ -63,24 +63,29 @@ const Home = () => {
 
   const faqData = [
     {
-      question: 'Gli organizer si adattano a spazi standard negli armadi?',
-      answer: 'Sì, i nostri organizer sono progettati per adattarsi agli spazi standard degli armadi. Sono ideali sia per scaffali che per spazi ristretti.',
+      question: "Gli organizer si adattano a spazi standard negli armadi?",
+      answer:
+        "Sì, i nostri organizer sono progettati per adattarsi agli spazi standard degli armadi. Sono ideali sia per scaffali che per spazi ristretti.",
     },
     {
-      question: 'Di che Materiale Sono le Vostre Scatole?',
-      answer: 'Le nostre scatole sono realizzate con materiali sostenibili, come plastica riciclata e tessuti resistenti.',
+      question: "Di che Materiale Sono le Vostre Scatole?",
+      answer:
+        "Le nostre scatole sono realizzate con materiali sostenibili, come plastica riciclata e tessuti resistenti.",
     },
     {
-      question: 'In Quanto Tempo riceverò il Mio Ordine?',
-      answer: 'I nostri ordini vengono spediti entro 2-3 giorni lavorativi e consegnati entro 5 giorni.',
+      question: "In Quanto Tempo riceverò il Mio Ordine?",
+      answer:
+        "I nostri ordini vengono spediti entro 2-3 giorni lavorativi e consegnati entro 5 giorni.",
     },
     {
-      question: 'Gli organizer sono impilabili o pieghevoli?',
-      answer: 'Sì, offriamo organizer sia impilabili che pieghevoli, per massimizzare lo spazio disponibile.',
+      question: "Gli organizer sono impilabili o pieghevoli?",
+      answer:
+        "Sì, offriamo organizer sia impilabili che pieghevoli, per massimizzare lo spazio disponibile.",
     },
     {
-      question: 'Cosa succede se non Sono Soddisfatta?',
-      answer: 'Offriamo una garanzia di rimborso entro 30 giorni dall’acquisto.',
+      question: "Cosa succede se non Sono Soddisfatta?",
+      answer:
+        "Offriamo una garanzia di rimborso entro 30 giorni dall’acquisto.",
     },
   ];
 
@@ -93,7 +98,14 @@ const Home = () => {
   return (
     <>
       <Banner>Spedizione gratuita per ordini superiori a 50 euro</Banner>
-      <Header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1% 5%" }}>
+      <Header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "1% 5%",
+        }}
+      >
         {/* Left Section: Zencasa Title and Navigation Links */}
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
           <Title>Zencasa</Title>
@@ -115,9 +127,9 @@ const Home = () => {
           <StyledButton
             onClick={() => {
               if (isAuthenticated) {
-                if (role === 'Admin') {
+                if (role === "Admin") {
                   setTimeout(() => navigate("/admin"), 0);
-                } else if (role === 'assistenzaClienti') {
+                } else if (role === "assistenzaClienti") {
                   setTimeout(() => navigate("/service"), 0);
                 } else {
                   setTimeout(() => navigate("/user"), 0);
@@ -169,14 +181,20 @@ const Home = () => {
         <HeroContent>
           <DiscountTag>🔥 Fino al 50% di Sconto</DiscountTag>
           <MainHeadline>
-            ZenCasa | Scatole per Armadio Rigide con Cerniera da 66L, Set da 3 Contenitori per Armadio Salvaspazio, Organizer Armadio con Struttura in Metallo Pieghevole con Maniglie Rinforzate
+            ZenCasa | Scatole per Armadio Rigide con Cerniera da 66L, Set da 3
+            Contenitori per Armadio Salvaspazio, Organizer Armadio con Struttura
+            in Metallo Pieghevole con Maniglie Rinforzate
           </MainHeadline>
-          <CTAButton onClick={() => window.location.href = "/products"}>
+          <CTAButton onClick={() => navigate("/products")}>
             Ordina Ora!
           </CTAButton>
 
           <RatingContainer>
-            <Star>⭐</Star><Star>⭐</Star><Star>⭐</Star><Star>⭐</Star><Star>⭐</Star>
+            <Star>⭐</Star>
+            <Star>⭐</Star>
+            <Star>⭐</Star>
+            <Star>⭐</Star>
+            <Star>⭐</Star>
             <span>1000+ Clienti Soddisfatti</span>
           </RatingContainer>
         </HeroContent>
@@ -210,7 +228,10 @@ const Home = () => {
         <AssemblyStep>
           <StepContent>
             <h3>Step 1: Spacchetta il Set</h3>
-            <p>Estrarre l’Organizer dalla confezione in plastica e aprire la cerniera dalla parte superiore.</p>
+            <p>
+              Estrarre l’Organizer dalla confezione in plastica e aprire la
+              cerniera dalla parte superiore.
+            </p>
           </StepContent>
           <CircularImage2>
             <img src="/assets/immagini/passo1.jpeg" alt="Step 1" />
@@ -231,8 +252,9 @@ const Home = () => {
           <StepContent>
             <h3>Step 3: Sistema il Supporto in Metallo</h3>
             <p>
-              <strong>NB:</strong> Potresti trovare i supporti sganciati dalla struttura superiore.
-              Inserisci la parte superiore del supporto in metallo nell’apposito foro.
+              <strong>NB:</strong> Potresti trovare i supporti sganciati dalla
+              struttura superiore. Inserisci la parte superiore del supporto in
+              metallo nell’apposito foro.
             </p>
           </StepContent>
           <CircularImage2>
@@ -249,7 +271,7 @@ const Home = () => {
             <p>La tua scatola è pronta all'uso!</p>
           </StepContent>
         </AssemblyStep>
-        <CTAButton2 onClick={() => window.location.href = "/products"}>
+        <CTAButton2 onClick={() => navigate("/products")}>
           Ordina Ora!
         </CTAButton2>
       </AssemblySection>
@@ -258,9 +280,17 @@ const Home = () => {
         <BrandStoryText>
           <h2>LA NOSTRA STORIA</h2>
           <p>
-            Benvenuti in Zencasa, dove crediamo che ordinare il vostro spazio possa liberare la mente. Fondata nel 2020, la nostra missione è trasformare ogni casa in un santuario di serenità attraverso soluzioni innovative e sostenibili. Ogni prodotto è progettato per aumentare l'efficienza e l'armonia domestica, aiutandovi a riconquistare il controllo del vostro ambiente e, di conseguenza, della vostra vita. Unitevi al movimento Zencasa e scoprite come un ambiente più ordinato possa portare a una vita più felice e centrata.
+            Benvenuti in Zencasa, dove crediamo che ordinare il vostro spazio
+            possa liberare la mente. Fondata nel 2020, la nostra missione è
+            trasformare ogni casa in un santuario di serenità attraverso
+            soluzioni innovative e sostenibili. Ogni prodotto è progettato per
+            aumentare l'efficienza e l'armonia domestica, aiutandovi a
+            riconquistare il controllo del vostro ambiente e, di conseguenza,
+            della vostra vita. Unitevi al movimento Zencasa e scoprite come un
+            ambiente più ordinato possa portare a una vita più felice e
+            centrata.
           </p>
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <div style={{ textAlign: "center", marginTop: "20px" }}>
             <StoryButton onClick={() => setIsPopupOpen(true)}>
               Scopri di più
             </StoryButton>
@@ -284,7 +314,7 @@ const Home = () => {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            zIndex: 1000
+            zIndex: 1000,
           }}
         >
           <div
@@ -299,33 +329,40 @@ const Home = () => {
               borderRadius: "10px",
               boxShadow: "0 5px 15px rgba(0,0,0,0.3)",
               overflow: "hidden",
-              position: "relative"
+              position: "relative",
             }}
           >
             {/* Testo sulla sinistra */}
             <div style={{ flex: 1, padding: "20px" }}>
               <h2>La Storia di Zencasa</h2>
               <p>
-                Nata nel 2020, Zencasa è frutto della passione di un team di giovani 
-                professionisti che credono fortemente nell'importanza di un ambiente 
-                domestico ordinato per migliorare la qualità della vita. Siamo partiti da 
-                un'idea semplice: trasformare ogni stanza in un luogo di pace, armonia e 
-                praticità. <br /><br />
-                Grazie a un'attenta ricerca di materiali eco-friendly e a un costante 
-                impegno nell'innovazione, ci siamo specializzati in soluzioni di 
-                organizzazione domestica, adatte a soddisfare ogni esigenza di spazio. 
-                Ogni articolo firmato Zencasa è realizzato con cura, pensando alle necessità 
-                di ogni giorno e all'importanza di un ambiente privo di disordine. <br /><br />
-                Con il tempo, la nostra gamma di prodotti si è ampliata, e oggi collaboriamo 
-                con designer e professionisti del settore per creare soluzioni che uniscano 
-                stile e funzionalità, senza mai perdere di vista la sostenibilità. Siamo 
-                convinti che un ambiente ordinato possa ridurre lo stress, favorire la 
-                concentrazione e permettere di godere appieno dei momenti trascorsi in casa. <br /><br />
-                Oggi, Zencasa è un punto di riferimento per chi desidera vivere in un 
-                ambiente più funzionale e rilassante. Ogni nostro prodotto è pensato per 
-                aiutarti a ottimizzare lo spazio, migliorare la tua routine e liberare la 
-                mente dal superfluo. Unisciti a noi e scopri come l’organizzazione può 
-                davvero portare a una vita più serena e felice.
+                Nata nel 2020, Zencasa è frutto della passione di un team di
+                giovani professionisti che credono fortemente nell'importanza di
+                un ambiente domestico ordinato per migliorare la qualità della
+                vita. Siamo partiti da un'idea semplice: trasformare ogni stanza
+                in un luogo di pace, armonia e praticità. <br />
+                <br />
+                Grazie a un'attenta ricerca di materiali eco-friendly e a un
+                costante impegno nell'innovazione, ci siamo specializzati in
+                soluzioni di organizzazione domestica, adatte a soddisfare ogni
+                esigenza di spazio. Ogni articolo firmato Zencasa è realizzato
+                con cura, pensando alle necessità di ogni giorno e
+                all'importanza di un ambiente privo di disordine. <br />
+                <br />
+                Con il tempo, la nostra gamma di prodotti si è ampliata, e oggi
+                collaboriamo con designer e professionisti del settore per
+                creare soluzioni che uniscano stile e funzionalità, senza mai
+                perdere di vista la sostenibilità. Siamo convinti che un
+                ambiente ordinato possa ridurre lo stress, favorire la
+                concentrazione e permettere di godere appieno dei momenti
+                trascorsi in casa. <br />
+                <br />
+                Oggi, Zencasa è un punto di riferimento per chi desidera vivere
+                in un ambiente più funzionale e rilassante. Ogni nostro prodotto
+                è pensato per aiutarti a ottimizzare lo spazio, migliorare la
+                tua routine e liberare la mente dal superfluo. Unisciti a noi e
+                scopri come l’organizzazione può davvero portare a una vita più
+                serena e felice.
               </p>
             </div>
 
@@ -355,7 +392,7 @@ const Home = () => {
                 fontSize: "16px",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center"
+                justifyContent: "center",
               }}
             >
               ✖
@@ -373,14 +410,19 @@ const Home = () => {
               <div key={index}>
                 <Question onClick={() => toggleAnswer(index)}>
                   <span>{faq.question}</span>
-                  <span>{openQuestionIndex === index ? '-' : '>'}</span>
+                  <span>{openQuestionIndex === index ? "-" : ">"}</span>
                 </Question>
                 {openQuestionIndex === index && <Answer>{faq.answer}</Answer>}
               </div>
             ))}
-            <MoreButton as="a" href="https://wa.me/393883816904" target="_blank" rel="noopener noreferrer">
-            Altre Domande?
-          </MoreButton>
+            <MoreButton
+              as="a"
+              href="https://wa.me/393883816904"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Altre Domande?
+            </MoreButton>
           </FAQContent>
           <FAQImage src="/assets/immagini/ES.png" alt="FAQ" />
         </FAQContainer>
@@ -391,19 +433,22 @@ const Home = () => {
           <ContactInfo>
             <ContactTitle>ZENCASA</ContactTitle>
             <ContactText>
-              Ordina il Tuo Spazio<br />
+              Ordina il Tuo Spazio
+              <br />
               Libera la Tua Mente
             </ContactText>
             <div>
-              <p><strong>Contatti:</strong></p>
               <p>
-                📧 Email: <a href="mailto:info@zencasaitalia.it">info@zencasaitalia.it</a>
+                <strong>Contatti:</strong>
+              </p>
+              <p>
+                📧 Email:{" "}
+                <a href="mailto:info@zencasaitalia.it">info@zencasaitalia.it</a>
               </p>
               <p>📞 Telefono: +39 388 381 6904</p>
               <p>🕒 Orari di Supporto: Lun-Ven 9:00 - 18:00</p>
             </div>
           </ContactInfo>
-
         </ContactSection>
       </div>
     </>
