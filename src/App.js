@@ -10,7 +10,6 @@ import Register from './pages/Register';
 import CompletaProfilo from './pages/CompletaProfilo';
 import ProductsCatalog from './pages/Catalog';
 import Cart from './pages/Cart';
-import Catalog from './pages/Catalog';
 import User from './pages/User';
 import ServicePage from './pages/ServicePage';
 
@@ -20,14 +19,13 @@ import {AuthProvider} from "./data/authContext";
 function App() {
   return (
     <AuthProvider> {/* Avvolgiamo in authProvider l'app che fornisce contesto navigazione*/ }
-    <Router>  {/* Definisce il router per gestire la navigazione dell'app. */ }
+    <Router>  {/* Definisce il router per gestire la navigazione dell'app. Avvolge l'applicazione*/ }
       <div>
         <Routes> {/* Contiene tutte le rotte */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/admin/*" element={<AdminPage />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="/products" element={<ProductsCatalog/>}/>
-          <Route path="/products/:documentId" element={<Catalog />} />
           <Route path="/register" element={<Register />} />
           <Route path="/completa-profilo" element={<CompletaProfilo />} />
           <Route path="/cart" element={<Cart/>} />

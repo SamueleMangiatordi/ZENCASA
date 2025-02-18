@@ -219,6 +219,7 @@ const User = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Title>Zencasa</Title>
           <nav style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <StyledButton to="/">HOME</StyledButton>
             <StyledButton to="/products">CATALOGO</StyledButton>
             <StyledButton
               as="a"
